@@ -1,6 +1,9 @@
 # Acayip Widgets
 
-This project aims to extend the Qt Widgets with modern features.
+This project aims to extend the Qt Widgets library with modern features.
 
+> [!TIP]
+> We recommend using this library as part of the [AppTemplateQt](https://github.com/omergoktas/AppTemplateQt) project for a better development experience.
 
-> Note: The master branch is a work-in-progress; prefer [releases](https://github.com/omergoktas/acayipwidgets/releases) for relatively stable work.
+> [!NOTE]
+> This project is a work-in-progress.
