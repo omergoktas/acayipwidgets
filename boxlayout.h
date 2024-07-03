@@ -1,10 +1,13 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #pragma once
 
-#include <acayipwidgets_export.h>
+#include <acayipglobal.h>
 
 #include <QBoxLayout>
+
+ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 class BoxLayoutPrivate;
 
@@ -41,3 +44,5 @@ class ACAYIPWIDGETS_EXPORT VBoxLayout : public BoxLayout
 public:
     explicit VBoxLayout(QWidget* parent = nullptr);
 };
+
+ACAYIPWIDGETS_END_NAMESPACE

@@ -1,0 +1,23 @@
+// Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
+
+#pragma once
+
+#if @ACAYIPWIDGETS_NAMESPACE_ENABLED@
+#define ACAYIPWIDGETS_NAMESPACE @ACAYIPWIDGETS_NAMESPACE@
+#endif
+
+#if defined(ACAYIPWIDGETS_NAMESPACE)
+#define ACAYIPWIDGETS_PREPEND_NAMESPACE(name) ::ACAYIPWIDGETS_NAMESPACE::name
+#define ACAYIPWIDGETS_USE_NAMESPACE using namespace ::ACAYIPWIDGETS_NAMESPACE;
+#define ACAYIPWIDGETS_BEGIN_NAMESPACE inline namespace ACAYIPWIDGETS_NAMESPACE {
+#define ACAYIPWIDGETS_END_NAMESPACE }
+inline namespace ACAYIPWIDGETS_NAMESPACE {}
+#else
+#define ACAYIPWIDGETS_PREPEND_NAMESPACE(name) ::name
+#define ACAYIPWIDGETS_USE_NAMESPACE
+#define ACAYIPWIDGETS_BEGIN_NAMESPACE
+#define ACAYIPWIDGETS_END_NAMESPACE
+#endif
+
+#include <acayipwidgets_export.h>

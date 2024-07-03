@@ -1,10 +1,13 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "boxlayout.h"
 #include "boxlayout_p.h"
 
 #include <QCoreApplication>
 #include <QWidget>
+
+ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 BoxLayoutPrivate::BoxLayoutPrivate(BoxLayout* q_ptr)
     : q(q_ptr)
@@ -82,3 +85,5 @@ HBoxLayout::HBoxLayout(QWidget* parent)
 VBoxLayout::VBoxLayout(QWidget* parent)
     : BoxLayout(TopToBottom, parent)
 {}
+
+ACAYIPWIDGETS_END_NAMESPACE

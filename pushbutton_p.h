@@ -1,11 +1,24 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
+
+/*
+ * WARNING: This file exists purely as a private implementation
+ * detail. This header file may change from version to version
+ * without notice or even be removed.
+*/
 
 #pragma once
 
-#include "button.h"
-#include <private/qabstractbutton_p.h>
+#include <acayipglobal.h>
+
+#include "pushbutton.h"
+
+#include <private/qpushbutton_p.h>
+
 #include <QColor>
 #include <QPropertyAnimation>
+
+ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 class RippleEffect : public QObject
 {
@@ -23,36 +36,25 @@ private:
     qreal m_radius;
 };
 
-class ButtonPrivate : public QAbstractButtonPrivate
+class PushButtonPrivate : public QPushButtonPrivate
 {
-    Q_DECLARE_PUBLIC(Button)
+    Q_DECLARE_PUBLIC(PushButton)
 
 public:
-    ButtonPrivate();
+    PushButtonPrivate();
 
     void init();
-    void updateColors();
-    void drawBackground(QPainter& painter);
-    void drawBorder(QPainter& painter);
-    void drawText(QPainter& painter);
-    void drawIcon(QPainter& painter);
-    void drawRippleEffect(QPainter& painter);
-    void updateCursor();
-    void startRippleAnimation(const QPoint& pos);
 
-    Button::ButtonType buttonType;
-    Button::ButtonStyle buttonStyle;
     QColor backgroundColor;
     QColor textColor;
     QColor borderColor;
     int borderWidth;
     int borderRadius;
-    bool outlined;
-    bool elevated;
-    int elevation;
 
     bool isHovered;
     bool isPressed;
     QVector<RippleEffect*> rippleEffects;
     QVector<QPropertyAnimation*> rippleAnimations;
 };
+
+ACAYIPWIDGETS_END_NAMESPACE

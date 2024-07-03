@@ -1,4 +1,5 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "acayipstyle.h"
 #include "acayipstyle_p.h"
@@ -6,11 +7,13 @@
 #include <QPixmapCache>
 #include <QStyleHints>
 
+ACAYIPWIDGETS_BEGIN_NAMESPACE
+
 using namespace Qt::Literals;
 
-/*
-    \internal
-*/
+/*!
+ *  \internal
+ */
 AcayipStylePrivate::AcayipStylePrivate() {}
 
 /*!
@@ -120,3 +123,5 @@ void AcayipStyle::onColorSchemeChanged() const
     QGuiApplication::setPalette(standardPalette());
     QPixmapCache::clear(); // Cached QIcon pixmaps make use of the old palette
 }
+
+ACAYIPWIDGETS_END_NAMESPACE

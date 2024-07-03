@@ -1,14 +1,17 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #pragma once
 
-#include <acayipwidgets_export.h>
+#include <acayipglobal.h>
 
 #include <QCommonStyle>
 
+ACAYIPWIDGETS_BEGIN_NAMESPACE
+
 class AcayipStylePrivate;
 
-class ACAYIPWIDGETS_EXPORT AcayipStyle : public QCommonStyle
+class AcayipStyle : public QCommonStyle
 {
     Q_OBJECT
     Q_DISABLE_COPY(AcayipStyle)
@@ -24,3 +27,5 @@ protected slots:
 protected:
     AcayipStyle(AcayipStylePrivate& dd);
 };
+
+ACAYIPWIDGETS_END_NAMESPACE
