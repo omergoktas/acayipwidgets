@@ -17,13 +17,20 @@ class ACAYIPWIDGETS_EXPORT PushButton : public QPushButton
     Q_DISABLE_COPY(PushButton)
     Q_DECLARE_PRIVATE(PushButton)
 
+    Q_PROPERTY(ButtonStyles styles READ styles WRITE setStyles NOTIFY stylesChanged)
+
 public:
     explicit PushButton(QWidget* parent = nullptr);
     explicit PushButton(const QString& text, QWidget* parent = nullptr);
     explicit PushButton(const QIcon& icon,
                         const QString& text,
                         QWidget* parent = nullptr);
-    ~PushButton() override;
+
+    const ButtonStyles& styles() const;
+    void setStyles(const ButtonStyles& styles);
+
+signals:
+    void stylesChanged(const ButtonStyles& styles);
 
 private:
     using QPushButton::isFlat;

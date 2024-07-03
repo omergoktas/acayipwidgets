@@ -19,5 +19,3 @@ inline namespace ACAYIPWIDGETS_NAMESPACE {}
 #define ACAYIPWIDGETS_BEGIN_NAMESPACE
 #define ACAYIPWIDGETS_END_NAMESPACE
 #endif
-
-#include <acayipwidgets_export.h>

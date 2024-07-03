@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-#include "pushbutton.h"
 #include "pushbutton_p.h"
 
 #include <QMouseEvent>
@@ -180,37 +179,44 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 /*!
     \property QPushButton::flat
-    \brief this is private and not used anymore, use border properties instead.
+    \brief this property is private and not used anymore, use setStyles() instead.
 */
 
-RippleEffect::RippleEffect(const QPoint& center, QObject* parent)
-    : QObject(parent)
-    , m_center(center)
-    , m_radius(0)
-{}
-
-void RippleEffect::setRadius(qreal radius)
-{
-    m_radius = radius;
-}
-
+/*!
+ *  \internal
+*/
 PushButtonPrivate::PushButtonPrivate()
     : QPushButtonPrivate()
-    , backgroundColor(0, 120, 212)
-    , textColor(Qt::white)
-    , borderColor(0, 120, 212)
-    , borderWidth(1)
-    , borderRadius(4)
-    , isHovered(false)
-    , isPressed(false)
 {}
 
+/*!
+ *  \internal
+*/
 void PushButtonPrivate::init()
 {
     Q_Q(PushButton);
     q->setMouseTracking(true);
     q->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     q->setCursor(Qt::PointingHandCursor);
+}
+
+/*!
+ *  \internal
+*/
+void PushButtonPrivate::mergeStyleWithRest(ButtonStyle& target,
+                                           const ButtonStyle& source) const
+{
+    target.borderWidth = source.borderWidth != -1 ? source.borderWidth
+                                                  : target.borderWidth;
+    target.borderRadius = source.borderRadius != -1 ? source.borderRadius
+                                                    : target.borderRadius;
+    target.borderColor = source.borderColor.isValid() ? source.borderColor
+                                                      : target.borderColor;
+    target.textColor = source.textColor.isValid() ? source.textColor : target.textColor;
+    target.iconColor = source.iconColor.isValid() ? source.iconColor : target.iconColor;
+    target.backgroundBrush = source.backgroundBrush.style() != Qt::NoBrush
+                                 ? source.backgroundBrush
+                                 : target.backgroundBrush;
 }
 
 /*!
@@ -244,7 +250,7 @@ PushButton::PushButton(const QIcon& icon, const QString& text, QWidget* parent)
 
 /*!
  *  \internal
- */
+*/
 PushButton::PushButton(PushButtonPrivate& dd, QWidget* parent)
     : QPushButton(dd, parent)
 {
@@ -252,9 +258,28 @@ PushButton::PushButton(PushButtonPrivate& dd, QWidget* parent)
     d->init();
 }
 
-/*!
-    Destroys the push button.
-*/
-PushButton::~PushButton() {}
+const Acayip::ButtonStyles& PushButton::styles() const
+{
+    Q_D(const PushButton);
+    return d->styles;
+}
+
+void PushButton::setStyles(const ButtonStyles& styles)
+{
+    Q_D(PushButton);
+
+    d->styles.rest = styles.rest;
+
+    d->mergeStyleWithRest(d->styles.hovered, styles.hovered);
+    d->mergeStyleWithRest(d->styles.pressed, styles.pressed);
+    d->mergeStyleWithRest(d->styles.checked, styles.checked);
+    d->mergeStyleWithRest(d->styles.raised, styles.raised);
+    d->mergeStyleWithRest(d->styles.disabled, styles.disabled);
+    d->mergeStyleWithRest(d->styles.defaultButton, styles.defaultButton);
+
+    update();
+
+    emit stylesChanged(d->styles);
+}
 
 ACAYIPWIDGETS_END_NAMESPACE

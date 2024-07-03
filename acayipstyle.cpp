@@ -13,7 +13,7 @@ using namespace Qt::Literals;
 
 /*!
  *  \internal
- */
+*/
 AcayipStylePrivate::AcayipStylePrivate() {}
 
 /*!

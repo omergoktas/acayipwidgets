@@ -16,6 +16,7 @@ find_package(Qt${QT_VERSION_MAJOR}
 )
 
 qt_add_library(acayipwidgets
+    acayipglobal.h
     boxlayout.h
     boxlayout.cpp
     pushbutton.h
@@ -35,8 +36,10 @@ target_sources(acayipwidgets PRIVATE
 
 target_include_directories(acayipwidgets
     PUBLIC
-        ${CMAKE_CURRENT_BINARY_DIR} # acayipwidgets_export.h, acayipglobal.h
+        ${CMAKE_CURRENT_BINARY_DIR} # acayipwidgets_export.h, acayipconfig.h
     INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -55,6 +58,6 @@ if(ACAYIPWIDGETS_NAMESPACE STREQUAL "")
 else()
     set(ACAYIPWIDGETS_NAMESPACE_ENABLED 1)
 endif()
-configure_file(acayipglobal.h.in ${CMAKE_CURRENT_BINARY_DIR}/acayipglobal.h @ONLY)
+configure_file(acayipconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/acayipconfig.h @ONLY)
 
 generate_export_header(acayipwidgets)

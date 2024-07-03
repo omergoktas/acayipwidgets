@@ -20,41 +20,16 @@
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-class RippleEffect : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(qreal radius READ radius WRITE setRadius)
-
-public:
-    RippleEffect(const QPoint& center, QObject* parent = nullptr);
-    qreal radius() const { return m_radius; }
-    void setRadius(qreal radius);
-    QPoint center() const { return m_center; }
-
-private:
-    QPoint m_center;
-    qreal m_radius;
-};
-
 class PushButtonPrivate : public QPushButtonPrivate
 {
     Q_DECLARE_PUBLIC(PushButton)
 
 public:
     PushButtonPrivate();
-
     void init();
+    void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
 
-    QColor backgroundColor;
-    QColor textColor;
-    QColor borderColor;
-    int borderWidth;
-    int borderRadius;
-
-    bool isHovered;
-    bool isPressed;
-    QVector<RippleEffect*> rippleEffects;
-    QVector<QPropertyAnimation*> rippleAnimations;
+    ButtonStyles styles;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
