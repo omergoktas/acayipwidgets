@@ -17,6 +17,12 @@ class ACAYIPWIDGETS_EXPORT PushButton : public QPushButton
     Q_DISABLE_COPY(PushButton)
     Q_DECLARE_PRIVATE(PushButton)
 
+    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
+    Q_PROPERTY(qreal spacing READ spacing WRITE setSpacing NOTIFY spacingChanged)
+    Q_PROPERTY(QMarginsF margins READ margins WRITE setMargins NOTIFY marginsChanged)
+    Q_PROPERTY(QMarginsF paddings READ paddings WRITE setPaddings NOTIFY paddingsChanged)
+    Q_PROPERTY(Qt::Edge iconEdge READ iconEdge WRITE setIconEdge NOTIFY iconEdgeChanged)
+    Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat NOTIFY textFormatChanged)
     Q_PROPERTY(ButtonStyles styles READ styles WRITE setStyles NOTIFY stylesChanged)
 
 public:
@@ -26,10 +32,47 @@ public:
                         const QString& text,
                         QWidget* parent = nullptr);
 
+    qreal opacity() const;
+    void setOpacity(qreal opacity);
+
+    qreal spacing() const;
+    void setSpacing(qreal spacing);
+
+    const QMarginsF& margins() const;
+    void setMargins(const QMarginsF& margins);
+
+    const QMarginsF& paddings() const;
+    void setPaddings(const QMarginsF& paddings);
+
+    Qt::Edge iconEdge() const;
+    void setIconEdge(Qt::Edge iconEdge);
+
+    Qt::TextFormat textFormat() const;
+    void setTextFormat(Qt::TextFormat textFormat);
+
     const ButtonStyles& styles() const;
     void setStyles(const ButtonStyles& styles);
 
+    void setText(const QString& text);
+
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
+protected:
+    void changeEvent(QEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
+
+public slots:
+    void hideAnimated();
+    void showAnimated();
+
 signals:
+    void opacityChanged(qreal opacity);
+    void spacingChanged(qreal spacing);
+    void marginsChanged(const QMarginsF& margins);
+    void paddingsChanged(const QMarginsF& paddings);
+    void iconEdgeChanged(Qt::Edge iconEdge);
+    void textFormatChanged(Qt::TextFormat textFormat);
     void stylesChanged(const ButtonStyles& styles);
 
 private:

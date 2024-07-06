@@ -16,7 +16,8 @@
 #include <private/qpushbutton_p.h>
 
 #include <QColor>
-#include <QPropertyAnimation>
+#include <QTextDocument>
+#include <QTextLine>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -26,10 +27,23 @@ class PushButtonPrivate : public QPushButtonPrivate
 
 public:
     PushButtonPrivate();
+    enum Item { Background, Icon, Text };
     void init();
     void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
+    void updateTextDocumentContent();
+    void redoTextLayout();
+    QRectF itemRect(Item item) const;
 
+    qreal opacity;
+    qreal spacing;
+    QMarginsF margins;
+    QMarginsF paddings;
+    Qt::Edge iconEdge;
+    Qt::TextFormat textFormat;
     ButtonStyles styles;
+    QTextDocument textDocument;
+    QList<QTextLine> textLines;
+    QRectF naturalTextRect;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE

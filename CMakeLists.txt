@@ -40,7 +40,7 @@ target_include_directories(acayipwidgets
     INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR} # acayipglobal.h
 )
 
 target_link_libraries(acayipwidgets
