@@ -31,7 +31,7 @@ struct ButtonStyles
     ButtonStyle hovered;
     ButtonStyle pressed;
     ButtonStyle checked;
-    ButtonStyle afloat;
+    ButtonStyle elevated;
     ButtonStyle disabled;
     ButtonStyle defaultButton;
 };
@@ -41,6 +41,7 @@ struct StyleDefaults
     static constexpr qreal margins = 2.0;
     static constexpr qreal paddings = 8.0;
     static constexpr qreal spacing = 2.0;
+    static constexpr int animationDuration = 500;
     static constexpr int borderRadiusIsPercentage = 1000.0;
     static inline const ButtonStyles buttonStyles = {
         .rest = {
@@ -66,8 +67,8 @@ struct StyleDefaults
             .backgroundBrush = QBrush(0x0f548c),
             .backgroundBrushDark = QBrush(0x0f548c)
         },
-        .afloat = {
-            // ... members for afloat state ...
+        .elevated = {
+            // ... members for elevated state ...
         },
         .disabled = {
             .textColor = QColor(0xbdbdbd),

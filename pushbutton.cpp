@@ -44,7 +44,7 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 */
 PushButtonPrivate::PushButtonPrivate()
     : QPushButtonPrivate()
-    , afloat(false)
+    , elevated(false)
     , opacity(1.0)
     , spacing(StyleDefaults::spacing)
     , margins(StyleDefaults::margins,
@@ -67,6 +67,11 @@ PushButtonPrivate::PushButtonPrivate()
     textDocument.setDocumentMargin(0);
 }
 
+PushButtonPrivate::~PushButtonPrivate()
+{
+    qDeleteAll(rippleAnimations);
+}
+
 void PushButtonPrivate::init()
 {
     Q_Q(PushButton);
@@ -75,6 +80,17 @@ void PushButtonPrivate::init()
     q->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     q->setCursor(Qt::PointingHandCursor);
     q->setStyles(StyleDefaults::buttonStyles);
+
+    rippleAnimations.append(new QVariantAnimation());
+    rippleAnimations.append(new QVariantAnimation());
+    rippleAnimations.append(new QVariantAnimation());
+    for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
+        anim->setDuration(StyleDefaults::animationDuration);
+        anim->setEasingCurve(QEasingCurve::OutQuad);
+        QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
+            q->update();
+        });
+    }
 }
 
 /*!
@@ -231,6 +247,34 @@ qreal PushButtonPrivate::calculateRadius(int value) const
                : value;
 }
 
+void PushButtonPrivate::startRippleAnimation(const QPoint& pos)
+{
+    Q_Q(PushButton);
+
+    for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
+        if (anim->state() == QVariantAnimation::Running)
+            continue;
+        qreal w = 2.83 * qMax(q->width(), q->height());
+        QRectF rect;
+        rect.setSize({0, 0});
+        rect.moveCenter(pos);
+        anim->setStartValue(rect);
+        rect.setSize({w, w});
+        rect.moveCenter(pos);
+        anim->setEndValue(rect);
+        anim->start();
+        break;
+    }
+}
+
+QPainterPath PushButtonPrivate::backgroundPath() const
+{
+    qreal radius = calculateRadius(styles.rest.borderRadius);
+    QPainterPath path;
+    path.addRoundedRect(itemRect(PushButtonPrivate::Background), radius, radius);
+    return path;
+}
+
 /*!
     Constructs a push button with no text and a \a parent.
 */
@@ -383,7 +427,7 @@ void PushButton::setStyles(const ButtonStyles& styles)
     d->mergeStyleWithRest(d->styles.hovered, styles.hovered);
     d->mergeStyleWithRest(d->styles.pressed, styles.pressed);
     d->mergeStyleWithRest(d->styles.checked, styles.checked);
-    d->mergeStyleWithRest(d->styles.afloat, styles.afloat);
+    d->mergeStyleWithRest(d->styles.elevated, styles.elevated);
     d->mergeStyleWithRest(d->styles.disabled, styles.disabled);
     d->mergeStyleWithRest(d->styles.defaultButton, styles.defaultButton);
 
@@ -392,17 +436,17 @@ void PushButton::setStyles(const ButtonStyles& styles)
     emit stylesChanged(d->styles);
 }
 
-void PushButton::setAfloat(bool afloat)
+void PushButton::setElevated(bool elevated)
 {
     Q_D(PushButton);
-    d->afloat = afloat;
+    d->elevated = elevated;
     update();
 }
 
-bool PushButton::isAfloat() const
+bool PushButton::isElevated() const
 {
     Q_D(const PushButton);
-    return d->afloat;
+    return d->elevated;
 }
 
 void PushButton::setText(const QString& text)
@@ -476,9 +520,6 @@ void PushButton::changeEvent(QEvent* event)
         updateGeometry();
         update();
     }
-
-    if (event->type() == QEvent::CursorChange)
-        qDebug() << "adasda";
 }
 
 void PushButton::paintEvent(QPaintEvent*)
@@ -490,59 +531,57 @@ void PushButton::paintEvent(QPaintEvent*)
 
     QPainter painter(this);
     painter.setRenderHints(StyleDefaults::renderHints);
+    painter.setOpacity(d->opacity);
 
     // Paint the background
     qreal radius;
     qreal h; // half pen with
     QRectF bgRect = d->itemRect(PushButtonPrivate::Background);
-    qDebug() << bgRect << rect();
+
     if (isEnabled()) {
         if (d->down) {
             radius = d->calculateRadius(d->styles.pressed.borderRadius);
-            painter.setPen(darkStyle ? d->styles.pressed.borderPen
-                                     : d->styles.pressed.borderPenDark);
-            painter.setBrush(darkStyle ? d->styles.pressed.backgroundBrush
-                                       : d->styles.pressed.backgroundBrushDark);
-            h = painter.pen().widthF() / 2.0;
+            painter.setPen(darkStyle ? d->styles.pressed.borderPenDark
+                                     : d->styles.pressed.borderPen);
+            painter.setBrush(darkStyle ? d->styles.pressed.backgroundBrushDark
+                                       : d->styles.pressed.backgroundBrush);
+            h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
             if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
                 painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h), radius, radius);
         } else if (d->hovering) {
             radius = d->calculateRadius(d->styles.hovered.borderRadius);
-            painter.setPen(darkStyle ? d->styles.hovered.borderPen
-                                     : d->styles.hovered.borderPenDark);
-            painter.setBrush(darkStyle ? d->styles.hovered.backgroundBrush
-                                       : d->styles.hovered.backgroundBrushDark);
-            qDebug() << painter.pen() << painter.brush();
-            h = painter.pen().widthF() / 2.0;
+            painter.setPen(darkStyle ? d->styles.hovered.borderPenDark
+                                     : d->styles.hovered.borderPen);
+            painter.setBrush(darkStyle ? d->styles.hovered.backgroundBrushDark
+                                       : d->styles.hovered.backgroundBrush);
+            h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
             if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
                 painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h), radius, radius);
         } else if (d->checkable && d->checked) {
             radius = d->calculateRadius(d->styles.checked.borderRadius);
-            painter.setPen(darkStyle ? d->styles.checked.borderPen
-                                     : d->styles.checked.borderPenDark);
-            painter.setBrush(darkStyle ? d->styles.checked.backgroundBrush
-                                       : d->styles.checked.backgroundBrushDark);
-            h = painter.pen().widthF() / 2.0;
+            painter.setPen(darkStyle ? d->styles.checked.borderPenDark
+                                     : d->styles.checked.borderPen);
+            painter.setBrush(darkStyle ? d->styles.checked.backgroundBrushDark
+                                       : d->styles.checked.backgroundBrush);
+            h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
             if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
                 painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h), radius, radius);
         } else {
             radius = d->calculateRadius(d->styles.rest.borderRadius);
-            painter.setPen(darkStyle ? d->styles.rest.borderPen
-                                     : d->styles.rest.borderPenDark);
-            painter.setBrush(darkStyle ? d->styles.rest.backgroundBrush
-                                       : d->styles.rest.backgroundBrushDark);
-            h = painter.pen().widthF() / 2.0;
+            painter.setPen(darkStyle ? d->styles.rest.borderPenDark
+                                     : d->styles.rest.borderPen);
+            painter.setBrush(darkStyle ? d->styles.rest.backgroundBrushDark
+                                       : d->styles.rest.backgroundBrush);
+            h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
             if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
-                painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h),
-                                        radius,
-                                        radius);
-            if (isAfloat()) {
-                radius = d->calculateRadius(d->styles.afloat.borderRadius);
-                painter.setPen(darkStyle ? d->styles.afloat.borderPen
-                                         : d->styles.afloat.borderPenDark);
-                painter.setBrush(darkStyle ? d->styles.afloat.backgroundBrush
-                                           : d->styles.afloat.backgroundBrushDark);
-                h = painter.pen().widthF() / 2.0;
+                painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h), radius, radius);
+            if (isElevated()) {
+                radius = d->calculateRadius(d->styles.elevated.borderRadius);
+                painter.setPen(darkStyle ? d->styles.elevated.borderPenDark
+                                         : d->styles.elevated.borderPen);
+                painter.setBrush(darkStyle ? d->styles.elevated.backgroundBrushDark
+                                           : d->styles.elevated.backgroundBrush);
+                h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
                 if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
                     painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h),
                                             radius,
@@ -550,12 +589,11 @@ void PushButton::paintEvent(QPaintEvent*)
             }
             if (d->defaultButton) {
                 radius = d->calculateRadius(d->styles.defaultButton.borderRadius);
-                painter.setPen(darkStyle ? d->styles.defaultButton.borderPen
-                                         : d->styles.defaultButton.borderPenDark);
-                painter.setBrush(darkStyle
-                                     ? d->styles.defaultButton.backgroundBrush
-                                     : d->styles.defaultButton.backgroundBrushDark);
-                h = painter.pen().widthF() / 2.0;
+                painter.setPen(darkStyle ? d->styles.defaultButton.borderPenDark
+                                         : d->styles.defaultButton.borderPen);
+                painter.setBrush(darkStyle ? d->styles.defaultButton.backgroundBrushDark
+                                           : d->styles.defaultButton.backgroundBrush);
+                h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
                 if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
                     painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h),
                                             radius,
@@ -564,11 +602,11 @@ void PushButton::paintEvent(QPaintEvent*)
         }
     } else {
         radius = d->calculateRadius(d->styles.disabled.borderRadius);
-        painter.setPen(darkStyle ? d->styles.disabled.borderPen
-                                 : d->styles.disabled.borderPenDark);
-        painter.setBrush(darkStyle ? d->styles.disabled.backgroundBrush
-                                   : d->styles.disabled.backgroundBrushDark);
-        h = painter.pen().widthF() / 2.0;
+        painter.setPen(darkStyle ? d->styles.disabled.borderPenDark
+                                 : d->styles.disabled.borderPen);
+        painter.setBrush(darkStyle ? d->styles.disabled.backgroundBrushDark
+                                   : d->styles.disabled.backgroundBrush);
+        h = painter.pen() != Qt::NoPen ? painter.pen().widthF() / 2.0 : 0;
         if (painter.pen() != Qt::NoPen || painter.brush() != Qt::NoBrush)
             painter.drawRoundedRect(bgRect.adjusted(h, h, -h, -h), radius, radius);
     }
@@ -601,15 +639,31 @@ void PushButton::paintEvent(QPaintEvent*)
         line.draw(&painter, textRect.topLeft() + QPointF{0.0, top});
         top += line.height();
     }
+
+    painter.save();
+    painter.setOpacity(opacity() * 0.15);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::white);
+    painter.setClipPath(d->backgroundPath());
+    for (QVariantAnimation* anim : std::as_const(d->rippleAnimations)) {
+        if (anim->state() == QVariantAnimation::Running)
+            painter.drawEllipse(anim->currentValue().toRectF());
+    }
+    painter.restore();
+}
+
+void PushButton::mousePressEvent(QMouseEvent* event)
+{
+    Q_D(PushButton);
+    QPushButton::mousePressEvent(event);
+    if (event->isAccepted())
+        d->startRippleAnimation(event->pos());
 }
 
 bool PushButton::hitButton(const QPoint& pos) const
 {
     Q_D(const PushButton);
-    qreal radius = d->calculateRadius(d->styles.rest.borderRadius);
-    QPainterPath path;
-    path.addRoundedRect(d->itemRect(PushButtonPrivate::Background), radius, radius);
-    return path.contains(pos);
+    return d->backgroundPath().contains(pos);
 }
 
 void PushButton::hideAnimated() {}

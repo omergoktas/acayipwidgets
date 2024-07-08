@@ -54,8 +54,8 @@ public:
     const ButtonStyles& styles() const;
     void setStyles(const ButtonStyles& styles);
 
-    void setAfloat(bool afloat);
-    bool isAfloat() const;
+    void setElevated(bool elevated);
+    bool isElevated() const;
 
     void setText(const QString& text);
 
@@ -63,9 +63,10 @@ public:
     QSize minimumSizeHint() const override;
 
 protected:
-    bool event(QEvent *event) override;
+    bool event(QEvent* event) override;
     void changeEvent(QEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
     bool hitButton(const QPoint& pos) const override;
 
 public slots:

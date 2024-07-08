@@ -18,6 +18,7 @@
 #include <QColor>
 #include <QTextDocument>
 #include <QTextLine>
+#include <QVariantAnimation>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -27,6 +28,7 @@ class PushButtonPrivate : public QPushButtonPrivate
 
 public:
     PushButtonPrivate();
+    ~PushButtonPrivate();
     enum Item { Background, Icon, Text };
     void init();
     void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
@@ -34,8 +36,10 @@ public:
     void redoTextLayout();
     QRectF itemRect(Item item) const;
     qreal calculateRadius(int value) const;
+    void startRippleAnimation(const QPoint& pos);
+    QPainterPath backgroundPath() const;
 
-    bool afloat;
+    bool elevated;
     qreal opacity;
     qreal spacing;
     QMarginsF margins;
@@ -47,6 +51,7 @@ public:
     QList<QTextLine> textLines;
     QRectF naturalTextRect;
     QCursor cursor;
+    QList<QVariantAnimation*> rippleAnimations;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
