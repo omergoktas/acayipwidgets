@@ -22,7 +22,8 @@ class ACAYIPWIDGETS_EXPORT PushButton : public QPushButton
     Q_PROPERTY(QMarginsF margins READ margins WRITE setMargins NOTIFY marginsChanged)
     Q_PROPERTY(QMarginsF paddings READ paddings WRITE setPaddings NOTIFY paddingsChanged)
     Q_PROPERTY(Qt::Edge iconEdge READ iconEdge WRITE setIconEdge NOTIFY iconEdgeChanged)
-    Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat NOTIFY textFormatChanged)
+    Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat NOTIFY
+                   textFormatChanged)
     Q_PROPERTY(ButtonStyles styles READ styles WRITE setStyles NOTIFY stylesChanged)
 
 public:
@@ -53,14 +54,19 @@ public:
     const ButtonStyles& styles() const;
     void setStyles(const ButtonStyles& styles);
 
+    void setAfloat(bool afloat);
+    bool isAfloat() const;
+
     void setText(const QString& text);
 
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
 protected:
+    bool event(QEvent *event) override;
     void changeEvent(QEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
+    bool hitButton(const QPoint& pos) const override;
 
 public slots:
     void hideAnimated();
@@ -76,7 +82,9 @@ signals:
     void stylesChanged(const ButtonStyles& styles);
 
 private:
+    using QPushButton::autoDefault;
     using QPushButton::isFlat;
+    using QPushButton::setAutoDefault;
     using QPushButton::setFlat;
 
 protected:

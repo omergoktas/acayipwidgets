@@ -33,7 +33,9 @@ public:
     void updateTextDocumentContent();
     void redoTextLayout();
     QRectF itemRect(Item item) const;
+    qreal calculateRadius(int value) const;
 
+    bool afloat;
     qreal opacity;
     qreal spacing;
     QMarginsF margins;
@@ -44,6 +46,7 @@ public:
     QTextDocument textDocument;
     QList<QTextLine> textLines;
     QRectF naturalTextRect;
+    QCursor cursor;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
