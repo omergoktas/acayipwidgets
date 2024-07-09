@@ -31,9 +31,7 @@ struct ButtonStyles
     ButtonStyle hovered;
     ButtonStyle pressed;
     ButtonStyle checked;
-    ButtonStyle elevated;
     ButtonStyle disabled;
-    ButtonStyle defaultButton;
 };
 
 struct StyleDefaults
@@ -67,9 +65,6 @@ struct StyleDefaults
             .backgroundBrush = QBrush(0x0f548c),
             .backgroundBrushDark = QBrush(0x0f548c)
         },
-        .elevated = {
-            // ... members for elevated state ...
-        },
         .disabled = {
             .textColor = QColor(0xbdbdbd),
             .textColorDark = QColor(0x5c5c5c),
@@ -77,9 +72,6 @@ struct StyleDefaults
             .iconColorDark = QColor(0x5c5c5c),
             .backgroundBrush = QBrush(0xf0f0f0),
             .backgroundBrushDark = QBrush(0x141414)
-        },
-        .defaultButton = {
-            // ... members for default button state ...
         }
     };
     static constexpr QPainter::RenderHints renderHints{

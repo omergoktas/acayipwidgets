@@ -1,8 +1,8 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-#include "acayipstyleplugin.h"
-#include "acayipstyle.h"
+#include "acayipstyleplugin_p.h"
+#include "acayipstyle_p.h"
 
 using namespace Qt::Literals;
 

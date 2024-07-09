@@ -1,26 +1,31 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-/*
- * WARNING: This file exists purely as a private implementation
- * detail. This header file may change from version to version
- * without notice or even be removed.
-*/
-
 #pragma once
 
 #include <acayipglobal.h>
 
-#include <private/qcommonstyle_p.h>
+#include <QCommonStyle>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-class AcayipStylePrivate : public QCommonStylePrivate
+class AcayipStylePrivate;
+
+class AcayipStyle : public QCommonStyle
 {
-    Q_DECLARE_PUBLIC(AcayipStyle)
+    Q_OBJECT
+    Q_DISABLE_COPY(AcayipStyle)
+    Q_DECLARE_PRIVATE(AcayipStyle)
 
 public:
-    AcayipStylePrivate();
+    AcayipStyle();
+    QPalette standardPalette() const override;
+
+protected slots:
+    void onColorSchemeChanged() const;
+
+protected:
+    AcayipStyle(AcayipStylePrivate& dd);
 };
 
 ACAYIPWIDGETS_END_NAMESPACE

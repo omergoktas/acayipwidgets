@@ -24,11 +24,14 @@ qt_add_library(acayipwidgets
 )
 
 target_sources(acayipwidgets PRIVATE
-    acayipstyle.h
-    acayipstyle.cpp
-    acayipstyleplugin.h
-    acayipstyleplugin.cpp
+    acayipstyle_p_p.h
+    acayipstyle_p.h
+    acayipstyle_p.cpp
+    acayipstyleplugin_p.h
+    acayipstyleplugin_p.cpp
     acayipstyle.json
+    utils_p.h
+    utils_p.cpp
     boxlayout_p.h
     acayipstyle_p.h
     pushbutton_p.h

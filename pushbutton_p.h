@@ -38,6 +38,9 @@ public:
     qreal calculateRadius(int value) const;
     void startRippleAnimation(const QPoint& pos);
     QPainterPath backgroundPath() const;
+    const ButtonStyle& activeStyle() const;
+    bool isRippling() const;
+    qreal shortestActiveRippleAnimationTime() const;
 
     bool elevated;
     qreal opacity;
