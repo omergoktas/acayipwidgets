@@ -45,6 +45,7 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 */
 PushButtonPrivate::PushButtonPrivate()
     : QPushButtonPrivate()
+    , mouseAttached(false)
     , elevated(false)
     , opacity(1.0)
     , spacing(StyleDefaults::spacing)
@@ -254,11 +255,12 @@ void PushButtonPrivate::startRippleAnimation(const QPoint& pos)
         if (anim->state() == QVariantAnimation::Running)
             continue;
         QRectF bgRect = itemRect(PushButtonPrivate::Background);
-        qreal w = 3 * qMax(bgRect.width(), bgRect.height());
+        qreal hypotenuse = std::sqrt(bgRect.width() * bgRect.width()
+                                     + bgRect.height() * bgRect.height());
         QRectF rect;
         rect.moveCenter(pos);
         anim->setStartValue(rect);
-        rect.setSize({w, w});
+        rect.setSize({2 * hypotenuse, 2 * hypotenuse});
         rect.moveCenter(pos);
         anim->setEndValue(rect);
         anim->start();
@@ -266,11 +268,14 @@ void PushButtonPrivate::startRippleAnimation(const QPoint& pos)
     }
 }
 
-QPainterPath PushButtonPrivate::backgroundPath() const
+QPainterPath PushButtonPrivate::backgroundPath(const QMarginsF& m) const
 {
     qreal radius = calculateRadius(activeStyle().borderRadius);
     QPainterPath path;
-    path.addRoundedRect(itemRect(PushButtonPrivate::Background), radius, radius);
+    path.addRoundedRect(itemRect(PushButtonPrivate::Background)
+                            .adjusted(m.left(), m.top(), -m.right(), -m.bottom()),
+                        radius,
+                        radius);
     return path;
 }
 
@@ -361,7 +366,6 @@ void PushButton::setOpacity(qreal opacity)
     Q_D(PushButton);
     d->opacity = opacity;
     update();
-    emit opacityChanged(opacity);
 }
 
 qreal PushButton::spacing() const
@@ -376,7 +380,6 @@ void PushButton::setSpacing(qreal spacing)
     d->spacing = spacing;
     updateGeometry();
     update();
-    emit spacingChanged(spacing);
 }
 
 const QMarginsF& PushButton::margins() const
@@ -391,7 +394,6 @@ void PushButton::setMargins(const QMarginsF& margins)
     d->margins = margins;
     updateGeometry();
     update();
-    emit marginsChanged(margins);
 }
 
 const QMarginsF& PushButton::paddings() const
@@ -406,7 +408,6 @@ void PushButton::setPaddings(const QMarginsF& paddings)
     d->paddings = paddings;
     updateGeometry();
     update();
-    emit paddingsChanged(paddings);
 }
 
 Qt::Edge PushButton::iconEdge() const
@@ -420,7 +421,6 @@ void PushButton::setIconEdge(Qt::Edge iconEdge)
     Q_D(PushButton);
     d->iconEdge = iconEdge;
     update();
-    emit iconEdgeChanged(iconEdge);
 }
 
 Qt::TextFormat PushButton::textFormat() const
@@ -443,8 +443,20 @@ void PushButton::setTextFormat(Qt::TextFormat textFormat)
         QPushButton::setText({});
         setText(copy);
     }
+}
 
-    emit textFormatChanged(textFormat);
+const QBrush& PushButton::rippleBrush(bool dark) const
+{
+    Q_D(const PushButton);
+    return dark ? d->rippleBrushDark : d->rippleBrush;
+}
+
+void PushButton::setRippleBrush(const QBrush& brush, const QBrush& brushDark)
+{
+    Q_D(PushButton);
+    d->rippleBrush = brush;
+    d->rippleBrushDark = brushDark;
+    update();
 }
 
 const ButtonStyles& PushButton::styles() const
@@ -465,8 +477,6 @@ void PushButton::setStyles(const ButtonStyles& styles)
     d->mergeStyleWithRest(d->styles.disabled, styles.disabled);
 
     update();
-
-    emit stylesChanged(d->styles);
 }
 
 void PushButton::setElevated(bool elevated)
@@ -518,33 +528,44 @@ QSize PushButton::minimumSizeHint() const
     return QSize(qCeil(width), qCeil(height));
 }
 
+bool PushButton::hitButton(const QPoint& pos) const
+{
+    Q_D(const PushButton);
+    return d->backgroundPath().contains(pos);
+}
+
 bool PushButton::event(QEvent* event)
 {
     Q_D(PushButton);
 
-    bool result = QPushButton::event(event);
-
     if (event->type() == QEvent::HoverEnter) {
+        d->hovering = false;
         d->cursor = cursor();
         setCursor(Qt::ArrowCursor);
+        update();
     } else if (event->type() == QEvent::HoverLeave) {
+        d->hovering = false;
         setCursor(d->cursor);
+        update();
     } else if (event->type() == QEvent::HoverMove) {
         auto hover = static_cast<QHoverEvent*>(event);
-        if (hitButton(hover->position().toPoint()))
+        if (hitButton(hover->position().toPoint())) {
+            if (d->mouseAttached)
+                d->hovering = true;
             setCursor(d->cursor);
-        else
+        } else {
+            d->hovering = false;
             setCursor(Qt::ArrowCursor);
+        }
+        update();
     }
 
-    return result;
+    return QPushButton::event(event);
 }
 
 void PushButton::changeEvent(QEvent* event)
 {
     Q_D(PushButton);
-
-    QPushButton::changeEvent(event);
 
     if (event->type() == QEvent::FontChange
         || event->type() == QEvent::ApplicationFontChange) {
@@ -552,6 +573,23 @@ void PushButton::changeEvent(QEvent* event)
         updateGeometry();
         update();
     }
+
+    QPushButton::changeEvent(event);
+}
+
+void PushButton::mousePressEvent(QMouseEvent* event)
+{
+    Q_D(PushButton);
+    if (hitButton(event->pos()))
+        d->startRippleAnimation(event->pos());
+    QPushButton::mousePressEvent(event);
+}
+
+void PushButton::mouseMoveEvent(QMouseEvent* event)
+{
+    Q_D(PushButton);
+    d->mouseAttached = event->source() == Qt::MouseEventNotSynthesized;
+    QAbstractButton::mouseMoveEvent(event); // QPushButton breaks the hover logic
 }
 
 void PushButton::paintEvent(QPaintEvent*)
@@ -573,24 +611,31 @@ void PushButton::paintEvent(QPaintEvent*)
     const QBrush& bBrush = darkStyle ? style.backgroundBrushDark
                                      : style.backgroundBrush;
     const qreal bRadius = d->calculateRadius(style.borderRadius);
-    const qreal a = bPen != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
+    const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
+    const qreal t = d->shortestActiveRippleAnimationTime();
 
-    // Paint the background
-    if (bPen != Qt::NoPen || bBrush != Qt::NoBrush) {
+    if (bPen.style() != Qt::NoPen || bBrush.style() != Qt::NoBrush) {
         painter.setPen(bPen);
         painter.setBrush(bBrush);
-        painter.setOpacity(d->opacity);
+        painter.setOpacity(d->opacity * t);
         painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
     }
 
     // Paint the ripple effect
     if (d->isRippling()) {
-        qreal t = d->shortestActiveRippleAnimationTime();
-        const QBrush& rBrush = darkStyle ? d->styles.hovered.backgroundBrushDark
-                                         : d->styles.hovered.backgroundBrush;
+        const QPen& rPen = d->mouseAttached
+                               ? (darkStyle ? d->styles.hovered.borderPenDark
+                                            : d->styles.hovered.borderPen)
+                               : (darkStyle ? d->styles.rest.borderPenDark
+                                            : d->styles.rest.borderPen);
+        const QBrush& rBrush = d->mouseAttached
+                                   ? (darkStyle ? d->styles.hovered.backgroundBrushDark
+                                                : d->styles.hovered.backgroundBrush)
+                                   : (darkStyle ? d->styles.rest.backgroundBrushDark
+                                                : d->styles.rest.backgroundBrush);
         if (rBrush.style() != Qt::NoBrush) {
             // Paint ripple background
-            painter.setPen(Qt::NoPen);
+            painter.setPen(rPen);
             painter.setBrush(rBrush);
             painter.setOpacity(d->opacity * (1.0 - t));
             painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
@@ -598,18 +643,51 @@ void PushButton::paintEvent(QPaintEvent*)
             // Paint the ripple circle
             for (QVariantAnimation* anim : std::as_const(d->rippleAnimations)) {
                 if (anim->state() == QVariantAnimation::Running) {
-                    t = anim->currentLoopTime() / qreal(anim->duration());
-                    const QRectF& ripRect
-                        = anim->currentValue().toRectF().adjusted(a, a, -a, -a);
+                    const qreal rT = anim->currentLoopTime() / qreal(anim->duration());
+                    const QRectF& ripRect = anim->currentValue().toRectF();
+                    const QBrush& suppliedBrush = darkStyle ? d->rippleBrushDark
+                                                            : d->rippleBrush;
+                    const auto suppliedGrad = suppliedBrush.style()
+                                                      == Qt::RadialGradientPattern
+                                                  ? static_cast<const QRadialGradient*>(
+                                                      suppliedBrush.gradient())
+                                                  : nullptr;
                     QRadialGradient gradient(ripRect.center(),
                                              ripRect.width(),
                                              ripRect.center());
-                    gradient.setColorAt(0.0, strongerColor(rBrush.color(), 50));
-                    gradient.setColorAt(0.5, Qt::transparent);
-                    painter.setBrush(gradient);
+                    if (suppliedGrad) {
+                        gradient.setStops(suppliedGrad->stops());
+                        painter.setBrush(gradient);
+                    } else if (suppliedBrush.style() == Qt::SolidPattern) {
+                        gradient.setColorAt(0.0, suppliedBrush.color());
+                        gradient.setColorAt(0.55, Qt::transparent);
+                        painter.setBrush(gradient);
+                    } else if (suppliedBrush.style() == Qt::NoBrush) {
+                        if (rBrush.style() == Qt::SolidPattern) {
+                            gradient.setColorAt(0.0, strongerColor(rBrush.color()));
+                        } else {
+                            gradient.setColorAt(
+                                0.0,
+                                darkStyle
+                                    ? d->styles.pressed.backgroundBrushDark.color()
+                                    : d->styles.pressed.backgroundBrush.color());
+                        }
+                        gradient.setColorAt(0.55, Qt::transparent);
+                        painter.setBrush(gradient);
+                    } else {
+                        painter.setBrush(suppliedBrush);
+                    }
+                    painter.setPen(Qt::NoPen);
                     painter.setOpacity(
-                        d->opacity * (1.0 - 1.0 / (1.0 + std::exp(-10.0 * (t - 0.75)))));
-                    painter.drawRect(ripRect);
+                        d->opacity
+                        * (1.0 - 1.0 / (1.0 + std::exp(-10.0 * (rT - 0.75)))));
+                    painter.save();
+                    painter.setClipPath(
+                        d->backgroundPath(rPen.style() != Qt::NoPen
+                                              ? QMarginsF{2 * a, 2 * a, 2 * a, 2 * a}
+                                              : QMarginsF{}));
+                    painter.drawEllipse(ripRect);
+                    painter.restore();
                 }
             }
         }
@@ -650,20 +728,6 @@ void PushButton::paintEvent(QPaintEvent*)
             top += line.height();
         }
     }
-}
-
-void PushButton::mousePressEvent(QMouseEvent* event)
-{
-    Q_D(PushButton);
-    QPushButton::mousePressEvent(event);
-    if (event->isAccepted())
-        d->startRippleAnimation(event->pos());
-}
-
-bool PushButton::hitButton(const QPoint& pos) const
-{
-    Q_D(const PushButton);
-    return d->backgroundPath().contains(pos);
 }
 
 void PushButton::hideAnimated() {}

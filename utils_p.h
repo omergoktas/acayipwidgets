@@ -7,6 +7,6 @@
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-QColor strongerColor(QColor color, int strength = 50);
+QColor strongerColor(QColor color, int strength = 70);
 
 ACAYIPWIDGETS_END_NAMESPACE

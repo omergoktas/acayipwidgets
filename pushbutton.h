@@ -17,15 +17,6 @@ class ACAYIPWIDGETS_EXPORT PushButton : public QPushButton
     Q_DISABLE_COPY(PushButton)
     Q_DECLARE_PRIVATE(PushButton)
 
-    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged)
-    Q_PROPERTY(qreal spacing READ spacing WRITE setSpacing NOTIFY spacingChanged)
-    Q_PROPERTY(QMarginsF margins READ margins WRITE setMargins NOTIFY marginsChanged)
-    Q_PROPERTY(QMarginsF paddings READ paddings WRITE setPaddings NOTIFY paddingsChanged)
-    Q_PROPERTY(Qt::Edge iconEdge READ iconEdge WRITE setIconEdge NOTIFY iconEdgeChanged)
-    Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat NOTIFY
-                   textFormatChanged)
-    Q_PROPERTY(ButtonStyles styles READ styles WRITE setStyles NOTIFY stylesChanged)
-
 public:
     explicit PushButton(QWidget* parent = nullptr);
     explicit PushButton(const QString& text, QWidget* parent = nullptr);
@@ -51,6 +42,9 @@ public:
     Qt::TextFormat textFormat() const;
     void setTextFormat(Qt::TextFormat textFormat);
 
+    const QBrush& rippleBrush(bool dark) const;
+    void setRippleBrush(const QBrush& brush, const QBrush& brushDark);
+
     const ButtonStyles& styles() const;
     void setStyles(const ButtonStyles& styles);
 
@@ -63,24 +57,16 @@ public:
     QSize minimumSizeHint() const override;
 
 protected:
+    bool hitButton(const QPoint& pos) const override;
     bool event(QEvent* event) override;
     void changeEvent(QEvent* event) override;
-    void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
-    bool hitButton(const QPoint& pos) const override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 public slots:
     void hideAnimated();
     void showAnimated();
-
-signals:
-    void opacityChanged(qreal opacity);
-    void spacingChanged(qreal spacing);
-    void marginsChanged(const QMarginsF& margins);
-    void paddingsChanged(const QMarginsF& paddings);
-    void iconEdgeChanged(Qt::Edge iconEdge);
-    void textFormatChanged(Qt::TextFormat textFormat);
-    void stylesChanged(const ButtonStyles& styles);
 
 private:
     using QPushButton::autoDefault;

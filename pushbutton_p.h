@@ -37,11 +37,12 @@ public:
     QRectF itemRect(Item item) const;
     qreal calculateRadius(int value) const;
     void startRippleAnimation(const QPoint& pos);
-    QPainterPath backgroundPath() const;
+    QPainterPath backgroundPath(const QMarginsF& margins = QMarginsF()) const;
     const ButtonStyle& activeStyle() const;
     bool isRippling() const;
     qreal shortestActiveRippleAnimationTime() const;
 
+    bool mouseAttached;
     bool elevated;
     qreal opacity;
     qreal spacing;
@@ -54,6 +55,8 @@ public:
     QList<QTextLine> textLines;
     QRectF naturalTextRect;
     QCursor cursor;
+    QBrush rippleBrush;
+    QBrush rippleBrushDark;
     QList<QVariantAnimation*> rippleAnimations;
 };
 

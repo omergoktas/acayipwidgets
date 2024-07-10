@@ -44,34 +44,32 @@ struct StyleDefaults
     static inline const ButtonStyles buttonStyles = {
         .rest = {
             .borderRadius = borderRadiusIsPercentage + 100,
-            .borderPen = QColor(Qt::transparent),
-            .borderPenDark = QColor(Qt::transparent),
             .textColor = QColor(0xffffff),
             .textColorDark = QColor(0xffffff),
             .iconColor = QColor(0xffffff),
             .iconColorDark = QColor(0xffffff),
-            .backgroundBrush = QBrush(0x0f6cbd),
-            .backgroundBrushDark = QBrush(0x115ea3)
+            .backgroundBrush = QColor(0x0f6cbd),
+            .backgroundBrushDark = QColor(0x115ea3)
         },
         .hovered = {
-            .backgroundBrush = QBrush(0x115ea3),
-            .backgroundBrushDark = QBrush(0x0f6cbd)
+            .backgroundBrush = QColor(0x115ea3),
+            .backgroundBrushDark = QColor(0x0f6cbd)
         },
         .pressed = {
-            .backgroundBrush = QBrush(0x0c3b5e),
-            .backgroundBrushDark = QBrush(0x0c3b5e)
+            .backgroundBrush = QColor(0x0c3b5e),
+            .backgroundBrushDark = QColor(0x0c3b5e)
         },
         .checked = {
-            .backgroundBrush = QBrush(0x0f548c),
-            .backgroundBrushDark = QBrush(0x0f548c)
+            .backgroundBrush = QColor(0x0f548c),
+            .backgroundBrushDark = QColor(0x0f548c)
         },
         .disabled = {
             .textColor = QColor(0xbdbdbd),
             .textColorDark = QColor(0x5c5c5c),
             .iconColor = QColor(0xbdbdbd),
             .iconColorDark = QColor(0x5c5c5c),
-            .backgroundBrush = QBrush(0xf0f0f0),
-            .backgroundBrushDark = QBrush(0x141414)
+            .backgroundBrush = QColor(0xf0f0f0),
+            .backgroundBrushDark = QColor(0x141414)
         }
     };
     static constexpr QPainter::RenderHints renderHints{
