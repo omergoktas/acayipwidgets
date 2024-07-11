@@ -4,6 +4,7 @@
 #include "pushbutton_p.h"
 #include "utils_p.h"
 
+#include <QGraphicsDropShadowEffect>
 #include <QPainter>
 #include <QStyleHints>
 #include <QTextBlock>
@@ -67,32 +68,34 @@ PushButtonPrivate::PushButtonPrivate()
     textDocument.setDefaultTextOption(top);
     textDocument.setIndentWidth(0);
     textDocument.setDocumentMargin(0);
-    rippleAnimations.append(new QVariantAnimation());
-    rippleAnimations.append(new QVariantAnimation());
-    rippleAnimations.append(new QVariantAnimation());
-}
-
-PushButtonPrivate::~PushButtonPrivate()
-{
-    qDeleteAll(rippleAnimations);
 }
 
 void PushButtonPrivate::init()
 {
     Q_Q(PushButton);
+
     q->setMouseTracking(true);
     q->setAttribute(Qt::WA_Hover);
     q->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     q->setCursor(Qt::PointingHandCursor);
     q->setStyles(StyleDefaults::buttonStyles);
 
+    rippleAnimations.append(new QVariantAnimation(q));
+    rippleAnimations.append(new QVariantAnimation(q));
+    rippleAnimations.append(new QVariantAnimation(q));
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
-        anim->setDuration(StyleDefaults::animationDuration);
+        anim->setDuration(600);
         anim->setEasingCurve(QEasingCurve::OutCubic);
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
             q->update();
         });
     }
+
+    shadowEffect = new QGraphicsDropShadowEffect(q);
+    shadowEffect->setColor(QColor(0, 0, 0, 60));
+    shadowEffect->setBlurRadius(10);
+    shadowEffect->setOffset(0, 0.1);
+    q->setGraphicsEffect(shadowEffect);
 }
 
 /*!
@@ -260,7 +263,7 @@ void PushButtonPrivate::startRippleAnimation(const QPoint& pos)
         QRectF rect;
         rect.moveCenter(pos);
         anim->setStartValue(rect);
-        rect.setSize({2 * hypotenuse, 2 * hypotenuse});
+        rect.setSize({6 * hypotenuse, 6 * hypotenuse});
         rect.moveCenter(pos);
         anim->setEndValue(rect);
         anim->start();
@@ -340,9 +343,7 @@ PushButton::PushButton(const QIcon& icon, const QString& text, QWidget* parent)
     : PushButton(*new PushButtonPrivate, parent)
 {
     setText(text);
-    setIcon(QIcon("/home/omergoktas/Projeler/AppTemplateQt/deploy/icon.svg"));
-    setText("Telefon edelim");
-    setIconEdge(Qt::TopEdge);
+    setIcon(icon);
 }
 
 /*!
@@ -483,7 +484,8 @@ void PushButton::setElevated(bool elevated)
 {
     Q_D(PushButton);
     d->elevated = elevated;
-    update();
+    if (d->shadowEffect)
+        d->shadowEffect->setBlurRadius(elevated ? 80 : 10);
 }
 
 bool PushButton::isElevated() const
@@ -660,7 +662,8 @@ void PushButton::paintEvent(QPaintEvent*)
                         painter.setBrush(gradient);
                     } else if (suppliedBrush.style() == Qt::SolidPattern) {
                         gradient.setColorAt(0.0, suppliedBrush.color());
-                        gradient.setColorAt(0.55, Qt::transparent);
+                        gradient.setColorAt(0.5 + qMax(rT / 2.0 - 0.25, 0.0),
+                                            Qt::transparent);
                         painter.setBrush(gradient);
                     } else if (suppliedBrush.style() == Qt::NoBrush) {
                         if (rBrush.style() == Qt::SolidPattern) {
@@ -672,7 +675,8 @@ void PushButton::paintEvent(QPaintEvent*)
                                     ? d->styles.pressed.backgroundBrushDark.color()
                                     : d->styles.pressed.backgroundBrush.color());
                         }
-                        gradient.setColorAt(0.55, Qt::transparent);
+                        gradient.setColorAt(0.5 + qMax(rT / 2.0 - 0.25, 0.0),
+                                            Qt::transparent);
                         painter.setBrush(gradient);
                     } else {
                         painter.setBrush(suppliedBrush);
@@ -680,7 +684,7 @@ void PushButton::paintEvent(QPaintEvent*)
                     painter.setPen(Qt::NoPen);
                     painter.setOpacity(
                         d->opacity
-                        * (1.0 - 1.0 / (1.0 + std::exp(-10.0 * (rT - 0.75)))));
+                        * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.65)))));
                     painter.save();
                     painter.setClipPath(
                         d->backgroundPath(rPen.style() != Qt::NoPen
@@ -690,6 +694,16 @@ void PushButton::paintEvent(QPaintEvent*)
                     painter.restore();
                 }
             }
+        }
+    }
+
+    if (d->shadowEffect) {
+        if (d->isRippling()) {
+            d->shadowEffect->setYOffset(3.2 * t);
+        } else if (d->hovering) {
+            d->shadowEffect->setYOffset(3.2);
+        } else {
+            d->shadowEffect->setYOffset(0.1);
         }
     }
 

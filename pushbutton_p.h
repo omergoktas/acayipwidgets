@@ -19,6 +19,9 @@
 #include <QTextDocument>
 #include <QTextLine>
 #include <QVariantAnimation>
+#include <QPointer>
+
+class QGraphicsDropShadowEffect;
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -28,7 +31,6 @@ class PushButtonPrivate : public QPushButtonPrivate
 
 public:
     PushButtonPrivate();
-    ~PushButtonPrivate();
     enum Item { Background, Icon, Text };
     void init();
     void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
@@ -57,6 +59,7 @@ public:
     QCursor cursor;
     QBrush rippleBrush;
     QBrush rippleBrushDark;
+    QPointer<QGraphicsDropShadowEffect> shadowEffect;
     QList<QVariantAnimation*> rippleAnimations;
 };
 

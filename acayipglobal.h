@@ -36,8 +36,8 @@ struct ButtonStyles
 
 struct StyleDefaults
 {
-    static constexpr qreal margins = 2.0;
-    static constexpr qreal paddings = 8.0;
+    static constexpr qreal margins = 0.0;
+    static constexpr qreal paddings = 10.0;
     static constexpr qreal spacing = 2.0;
     static constexpr int animationDuration = 500;
     static constexpr int borderRadiusIsPercentage = 1000.0;
@@ -57,7 +57,7 @@ struct StyleDefaults
         },
         .pressed = {
             .backgroundBrush = QColor(0x0c3b5e),
-            .backgroundBrushDark = QColor(0x0c3b5e)
+            .backgroundBrushDark = QColor(0x0f6cbd)
         },
         .checked = {
             .backgroundBrush = QColor(0x0f548c),
