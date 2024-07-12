@@ -51,6 +51,9 @@ public:
     void setElevated(bool elevated);
     bool isElevated() const;
 
+    void setHoverShadowEnabled(bool hoverShadowEnabled);
+    bool isHoverShadowEnabled() const;
+
     void setText(const QString& text);
 
     QSize sizeHint() const override;

@@ -46,6 +46,7 @@ public:
     qreal shortestActiveRippleAnimationTime() const;
 
     bool mouseAttached;
+    bool hoverShadowEnabled;
     bool elevated;
     qreal opacity;
     qreal spacing;

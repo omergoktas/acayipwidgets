@@ -41,7 +41,8 @@ struct StyleDefaults
     static constexpr qreal paddings = 10.0;
     static constexpr qreal spacing = 2.0;
     static constexpr int animationDuration = 300;
-    static constexpr QEasingCurve::Type easingType = QEasingCurve::OutCubic;
+    static constexpr QEasingCurve::Type outEasingType = QEasingCurve::OutCubic;
+    static constexpr QEasingCurve::Type inEasingType = QEasingCurve::InCubic;
     static constexpr int borderRadiusIsPercentage = 1000.0;
     static inline const ButtonStyles buttonStyles = {
         .rest = {

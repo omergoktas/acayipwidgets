@@ -50,6 +50,7 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 PushButtonPrivate::PushButtonPrivate()
     : QPushButtonPrivate()
     , mouseAttached(false)
+    , hoverShadowEnabled(true)
     , elevated(false)
     , opacity(1.0)
     , spacing(StyleDefaults::spacing)
@@ -89,7 +90,7 @@ void PushButtonPrivate::init()
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
         // We ripple half the time and fade it the other half the time
         anim->setDuration(StyleDefaults::animationDuration * 2);
-        anim->setEasingCurve(StyleDefaults::easingType);
+        anim->setEasingCurve(StyleDefaults::outEasingType);
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
             q->update();
         });
@@ -104,10 +105,10 @@ void PushButtonPrivate::init()
     shadowAnimation.setTargetObject(shadowEffect);
     shadowAnimation.setDuration(StyleDefaults::animationDuration);
     shadowAnimation.setPropertyName("yOffset"_ba);
-    shadowAnimation.setEasingCurve(StyleDefaults::easingType);
+    shadowAnimation.setEasingCurve(StyleDefaults::outEasingType);
 
     showHideAnimation.setDuration(StyleDefaults::animationDuration);
-    showHideAnimation.setEasingCurve(StyleDefaults::easingType);
+    showHideAnimation.setEasingCurve(StyleDefaults::inEasingType);
 }
 
 /*!
@@ -509,6 +510,19 @@ bool PushButton::isElevated() const
     return d->elevated;
 }
 
+void PushButton::setHoverShadowEnabled(bool hoverShadowEnabled)
+{
+    Q_D(PushButton);
+    d->hoverShadowEnabled = hoverShadowEnabled;
+    update();
+}
+
+bool PushButton::isHoverShadowEnabled() const
+{
+    Q_D(const PushButton);
+    return d->elevated;
+}
+
 void PushButton::setText(const QString& text)
 {
     Q_D(PushButton);
@@ -715,7 +729,7 @@ void PushButton::paintEvent(QPaintEvent*)
         }
     }
 
-    if (d->shadowEffect && d->mouseAttached) {
+    if (d->hoverShadowEnabled && d->shadowEffect && d->mouseAttached) {
         if (d->hovering) {
             if (d->isRippling()) {
                 d->shadowEffect->setYOffset(3 * t);

@@ -37,7 +37,7 @@ void BoxLayoutPrivate::updateAnimations()
                                                     "geometry",
                                                     animationGroup.data());
             animation->setDuration(StyleDefaults::animationDuration);
-            animation->setEasingCurve(StyleDefaults::easingType);
+            animation->setEasingCurve(StyleDefaults::outEasingType);
             animations[widget] = animation;
             animationGroup->addAnimation(animation);
         }
