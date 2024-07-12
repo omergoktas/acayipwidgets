@@ -16,11 +16,11 @@
 #include <private/qpushbutton_p.h>
 
 #include <QColor>
+#include <QPointer>
+#include <QPropertyAnimation>
 #include <QTextDocument>
 #include <QTextLine>
 #include <QVariantAnimation>
-#include <QPropertyAnimation>
-#include <QPointer>
 
 class QGraphicsDropShadowEffect;
 
@@ -36,7 +36,6 @@ public:
     void init();
     void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
     void updateTextDocumentContent();
-    void redoTextLayout();
     QRectF itemRect(Item item) const;
     qreal calculateRadius(int value) const;
     void startRippleAnimation(const QPoint& pos);
@@ -56,8 +55,7 @@ public:
     Qt::TextFormat textFormat;
     ButtonStyles styles;
     QTextDocument textDocument;
-    QList<QTextLine> textLines;
-    QRectF naturalTextRect;
+    QSizeF textDocumentSizeHint;
     QCursor cursor;
     QBrush rippleBrush;
     QBrush rippleBrushDark;

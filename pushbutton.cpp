@@ -4,12 +4,10 @@
 #include "pushbutton_p.h"
 #include "utils_p.h"
 
+#include <QAbstractTextDocumentLayout>
 #include <QGraphicsDropShadowEffect>
 #include <QLayout>
-#include <QPainter>
 #include <QStyleHints>
-#include <QTextBlock>
-#include <QTextCursor>
 
 using namespace Qt::Literals;
 
@@ -67,10 +65,9 @@ PushButtonPrivate::PushButtonPrivate()
 {
     autoDefault = false;
     QTextOption top;
-    top.setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    top.setWrapMode(QTextOption::NoWrap);
+    top.setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    top.setWrapMode(QTextOption::WordWrap);
     textDocument.setDefaultTextOption(top);
-    textDocument.setIndentWidth(0);
     textDocument.setDocumentMargin(0);
 }
 
@@ -88,7 +85,7 @@ void PushButtonPrivate::init()
     rippleAnimations.append(new QVariantAnimation(q));
     rippleAnimations.append(new QVariantAnimation(q));
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
-        // We ripple half the time and fade it the other half the time
+        // We ripple half the time and fade half the time
         anim->setDuration(StyleDefaults::animationDuration * 2);
         anim->setEasingCurve(StyleDefaults::outEasingType);
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
@@ -144,56 +141,28 @@ void PushButtonPrivate::updateTextDocumentContent()
 {
     Q_Q(const PushButton);
 
-    textDocument.clear();
+    auto wrapInHtml = [](const QString& str) {
+        return u"<p style='text-align:center'>"_s + str + u"</p>"_s;
+    };
+
     textDocument.setDefaultFont(q->font());
 
-    QTextCursor textCursor(&textDocument);
-    textCursor.select(QTextCursor::Document);
-    textCursor.setPosition(0);
-
     if (textFormat == Qt::RichText)
-        textCursor.insertHtml(q->text());
+        textDocument.setHtml(q->text());
     else if (textFormat == Qt::PlainText)
-        textCursor.insertText(q->text());
+        textDocument.setHtml(wrapInHtml(q->text()));
+    else if (textFormat == Qt::MarkdownText)
+        textDocument.setMarkdown(q->text());
     else if (Qt::mightBeRichText(q->text()))
-        textCursor.insertHtml(q->text());
+        textDocument.setHtml(q->text());
     else
-        textCursor.insertText(q->text());
+        textDocument.setHtml(wrapInHtml(q->text()));
 
-    redoTextLayout();
-}
+    textDocument.setTextWidth(-1);
 
-void PushButtonPrivate::redoTextLayout()
-{
-    Q_Q(const PushButton);
+    textDocumentSizeHint = textDocument.size();
 
-    textLines.clear();
-    naturalTextRect = QRectF();
-
-    if (q->text().isNull())
-        return;
-
-    qreal top = 0;
-    QPainterPath path;
-    for (QTextBlock block = textDocument.begin(); block != textDocument.end();
-         block = block.next()) {
-        QTextLayout* lay = block.layout();
-        lay->beginLayout();
-        while (true) {
-            QTextLine line = lay->createLine();
-            if (!line.isValid())
-                break;
-            line.setLineWidth(std::numeric_limits<int>::max());
-            path.addRect(QRectF(QPointF(0, top), line.naturalTextRect().size()));
-            textLines.append(line);
-            top += line.height();
-        }
-        lay->endLayout();
-    }
-
-    naturalTextRect = path.boundingRect();
-
-    Q_ASSERT(!textLines.isEmpty() && !naturalTextRect.isNull());
+    textDocument.setTextWidth(itemRect(Text).width());
 }
 
 QRectF PushButtonPrivate::itemRect(Item item) const
@@ -358,7 +327,7 @@ PushButton::PushButton(const QIcon& icon, const QString& text, QWidget* parent)
 {
     setText(text);
     setIcon(icon);
-    setText("<p style='color:red;text-align:center'>hello<br>world naber lo</p>");
+    setText("hello <b>world");
 }
 
 /*!
@@ -546,9 +515,9 @@ QSize PushButton::minimumSizeHint() const
     Q_D(const PushButton);
 
     qreal width = d->margins.left() + d->margins.right() + d->paddings.left()
-                  + d->paddings.right() + d->naturalTextRect.width();
+                  + d->paddings.right() + d->textDocumentSizeHint.width();
     qreal height = d->margins.top() + d->margins.bottom() + d->paddings.top()
-                   + d->paddings.bottom() + d->naturalTextRect.height();
+                   + d->paddings.bottom() + d->textDocumentSizeHint.height();
 
     if (!icon().isNull()) {
         if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge)
@@ -664,6 +633,14 @@ void PushButton::mouseMoveEvent(QMouseEvent* event)
     Q_D(PushButton);
     d->mouseAttached = event->source() == Qt::MouseEventNotSynthesized;
     QAbstractButton::mouseMoveEvent(event); // QPushButton breaks the hover logic
+}
+
+void PushButton::resizeEvent(QResizeEvent* event)
+{
+    Q_D(PushButton);
+    if (event->size().width() != event->oldSize().width())
+        d->textDocument.setTextWidth(d->itemRect(PushButtonPrivate::Text).width());
+    QPushButton::resizeEvent(event);
 }
 
 void PushButton::paintEvent(QPaintEvent*)
@@ -798,45 +775,20 @@ void PushButton::paintEvent(QPaintEvent*)
 
     // Paint the text
     if (!text().isEmpty()) {
-        static const QString dots(u"..."_s);
-        qreal dotsLength = fontMetrics().horizontalAdvance(dots) + 0.5;
-        qreal top = txtRect.top();
-
         painter.setPen(darkStyle ? style.textColorDark : style.textColor);
         painter.setBrush(Qt::NoBrush);
         painter.setOpacity(o);
+        painter.setClipRect(txtRect);
 
-        for (int i = 0; i < d->textLines.size(); i++) {
-            const QTextLine& line = d->textLines.at(i);
+        QAbstractTextDocumentLayout::PaintContext context;
+        context.palette.setColor(QPalette::Text, painter.pen().color());
+        context.clip = QRectF({}, txtRect.size());
 
-            if (top + line.height() - 0.5 > txtRect.bottom())
-                break;
-
-            if (line.naturalTextWidth() - 0.5 > txtRect.width()
-                || (i < d->textLines.size() - 1 && top + 2 * line.height() - 0.5 > txtRect.bottom())) {
-                qreal dotsLeft = line.naturalTextWidth() + dotsLength > txtRect.width()
-                                     ? txtRect.right() - dotsLength
-                                     : txtRect.left() + line.naturalTextWidth() + 0.5;
-                painter.drawText(QRectF(dotsLeft, top, dotsLength, line.height()),
-                                 dots,
-                                 Qt::AlignVCenter | Qt::AlignLeft);
-                painter.setClipRect(txtRect.adjusted(0, 0, -dotsLength - 0.5, 0));
-            } else {
-                painter.setClipRect(txtRect);
-            }
-
-            qreal left = txtRect.left();
-            QTextBlock block = d->textDocument.findBlockByLineNumber(line.lineNumber());
-            if (block.isValid()) {
-                if (block.blockFormat().alignment() & Qt::AlignHCenter)
-                    left += (txtRect.width() - line.naturalTextWidth()) / 2.0;
-                else if (block.blockFormat().alignment() & Qt::AlignRight)
-                    left += txtRect.width() - line.naturalTextWidth();
-            }
-
-            line.draw(&painter, QPointF{left, top});
-            top += line.height();
-        }
+        QRectF documentRect({}, d->textDocument.size());
+        documentRect.moveCenter(txtRect.center());
+        painter.translate(documentRect.topLeft());
+        d->textDocument.documentLayout()->draw(&painter, context);
+        painter.translate(-documentRect.topLeft());
     }
 }
 

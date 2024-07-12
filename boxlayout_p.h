@@ -29,11 +29,12 @@ class BoxLayoutPrivate
 public:
     BoxLayoutPrivate(BoxLayout* q_ptr);
 
+    void init();
     void updateAnimations();
     void updateGeometries(bool oldGeometry);
 
     BoxLayout* q;
-    QScopedPointer<QParallelAnimationGroup> animationGroup;
+    QParallelAnimationGroup animationGroup;
     QMap<QWidget*, QPropertyAnimation*> animations;
     QList<QWidget*> widgets;
 };

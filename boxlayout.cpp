@@ -4,15 +4,21 @@
 #include "boxlayout.h"
 #include "boxlayout_p.h"
 
-#include <QCoreApplication>
 #include <QWidget>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 BoxLayoutPrivate::BoxLayoutPrivate(BoxLayout* q_ptr)
     : q(q_ptr)
-    , animationGroup(new QParallelAnimationGroup())
 {}
+
+void BoxLayoutPrivate::init()
+{
+    QObject::connect(&animationGroup,
+                     &QPropertyAnimation::finished,
+                     q,
+                     &BoxLayout::activate);
+}
 
 void BoxLayoutPrivate::updateAnimations()
 {
@@ -33,13 +39,11 @@ void BoxLayoutPrivate::updateAnimations()
 
     for (QWidget* widget : std::as_const(widgets)) {
         if (!animations.contains(widget)) {
-            auto animation = new QPropertyAnimation(widget,
-                                                    "geometry",
-                                                    animationGroup.data());
+            auto animation = new QPropertyAnimation(widget, "geometry", &animationGroup);
             animation->setDuration(StyleDefaults::animationDuration);
             animation->setEasingCurve(StyleDefaults::outEasingType);
             animations[widget] = animation;
-            animationGroup->addAnimation(animation);
+            animationGroup.addAnimation(animation);
         }
     }
 }
@@ -58,7 +62,9 @@ void BoxLayoutPrivate::updateGeometries(bool oldGeometry)
 BoxLayout::BoxLayout(Direction direction, QWidget* parent)
     : QBoxLayout(direction, parent)
     , d(new BoxLayoutPrivate(this))
-{}
+{
+    d->init();
+}
 
 BoxLayout::~BoxLayout()
 {
@@ -75,7 +81,8 @@ void BoxLayout::setGeometry(const QRect& rect)
 
 void BoxLayout::animate()
 {
-    d->animationGroup->start();
+    activate();
+    d->animationGroup.start();
 }
 
 HBoxLayout::HBoxLayout(QWidget* parent)
