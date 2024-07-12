@@ -59,6 +59,10 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
+public slots:
+    void hideAnimated();
+    void showAnimated();
+
 protected:
     bool hitButton(const QPoint& pos) const override;
     bool event(QEvent* event) override;
@@ -66,10 +70,6 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
-
-public slots:
-    void hideAnimated();
-    void showAnimated();
 
 private:
     using QPushButton::autoDefault;
