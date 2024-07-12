@@ -62,6 +62,7 @@ public:
     QBrush rippleBrushDark;
     QPointer<QGraphicsDropShadowEffect> shadowEffect;
     QPropertyAnimation shadowAnimation;
+    QVariantAnimation showHideAnimation;
     QList<QVariantAnimation*> rippleAnimations;
 };
 

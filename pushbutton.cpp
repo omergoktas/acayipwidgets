@@ -5,6 +5,7 @@
 #include "utils_p.h"
 
 #include <QGraphicsDropShadowEffect>
+#include <QLayout>
 #include <QPainter>
 #include <QStyleHints>
 #include <QTextBlock>
@@ -86,8 +87,9 @@ void PushButtonPrivate::init()
     rippleAnimations.append(new QVariantAnimation(q));
     rippleAnimations.append(new QVariantAnimation(q));
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
-        anim->setDuration(600);
-        anim->setEasingCurve(QEasingCurve::OutCubic);
+        // We ripple half the time and fade it the other half the time
+        anim->setDuration(StyleDefaults::animationDuration * 2);
+        anim->setEasingCurve(StyleDefaults::easingType);
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
             q->update();
         });
@@ -100,9 +102,12 @@ void PushButtonPrivate::init()
     q->setGraphicsEffect(shadowEffect);
 
     shadowAnimation.setTargetObject(shadowEffect);
-    shadowAnimation.setDuration(250);
+    shadowAnimation.setDuration(StyleDefaults::animationDuration);
     shadowAnimation.setPropertyName("yOffset"_ba);
-    shadowAnimation.setEasingCurve(QEasingCurve::OutQuad);
+    shadowAnimation.setEasingCurve(StyleDefaults::easingType);
+
+    showHideAnimation.setDuration(StyleDefaults::animationDuration);
+    showHideAnimation.setEasingCurve(StyleDefaults::easingType);
 }
 
 /*!
@@ -267,10 +272,11 @@ void PushButtonPrivate::startRippleAnimation(const QPoint& pos)
         QRectF bgRect = itemRect(PushButtonPrivate::Background);
         qreal hypotenuse = std::sqrt(bgRect.width() * bgRect.width()
                                      + bgRect.height() * bgRect.height());
+        qreal scale = 2 * StyleDefaults::animationDuration / 100.0;
         QRectF rect;
         rect.moveCenter(pos);
         anim->setStartValue(rect);
-        rect.setSize({6 * hypotenuse, 6 * hypotenuse});
+        rect.setSize({scale * hypotenuse, scale * hypotenuse});
         rect.moveCenter(pos);
         anim->setEndValue(rect);
         anim->start();
@@ -624,11 +630,15 @@ void PushButton::paintEvent(QPaintEvent*)
     const qreal bRadius = d->calculateRadius(style.borderRadius);
     const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
     const qreal t = d->shortestActiveRippleAnimationTime();
+    const qreal o = d->opacity
+                    * (d->showHideAnimation.state() == QAbstractAnimation::Running
+                           ? d->showHideAnimation.currentValue().toReal()
+                           : 1.0);
 
     if (bPen.style() != Qt::NoPen || bBrush.style() != Qt::NoBrush) {
         painter.setPen(bPen);
         painter.setBrush(bBrush);
-        painter.setOpacity(d->opacity * t);
+        painter.setOpacity(o * t);
         painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
     }
 
@@ -648,7 +658,7 @@ void PushButton::paintEvent(QPaintEvent*)
             // Paint ripple background
             painter.setPen(rPen);
             painter.setBrush(rBrush);
-            painter.setOpacity(d->opacity * (1.0 - t));
+            painter.setOpacity(o * (1.0 - t));
             painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
 
             // Paint the ripple circle
@@ -692,8 +702,7 @@ void PushButton::paintEvent(QPaintEvent*)
                     }
                     painter.setPen(Qt::NoPen);
                     painter.setOpacity(
-                        d->opacity
-                        * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.65)))));
+                        o * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.65)))));
                     painter.save();
                     painter.setClipPath(
                         d->backgroundPath(rPen.style() != Qt::NoPen
@@ -743,7 +752,7 @@ void PushButton::paintEvent(QPaintEvent*)
     if (!icon().isNull()) {
         painter.setPen(darkStyle ? style.iconColorDark : style.iconColor);
         painter.setBrush(Qt::NoBrush);
-        painter.setOpacity(d->opacity);
+        painter.setOpacity(o);
         painter.drawPixmap(d->itemRect(PushButtonPrivate::Icon),
                            d->icon.pixmap(iconSize(), devicePixelRatioF()),
                            QRectF({}, iconSize() * devicePixelRatioF()));
@@ -755,7 +764,7 @@ void PushButton::paintEvent(QPaintEvent*)
         qreal top = 0;
         painter.setPen(darkStyle ? style.textColorDark : style.textColor);
         painter.setBrush(Qt::NoBrush);
-        painter.setOpacity(d->opacity);
+        painter.setOpacity(o);
         for (QTextLine line : d->textLines) {
             line.draw(&painter, txtRect.topLeft() + QPointF{0.0, top});
             top += line.height();
@@ -763,8 +772,46 @@ void PushButton::paintEvent(QPaintEvent*)
     }
 }
 
-void PushButton::hideAnimated() {}
+void PushButton::hideAnimated()
+{
+    Q_D(PushButton);
+    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped)
+        d->showHideAnimation.stop();
+    d->showHideAnimation.setStartValue(1.0);
+    d->showHideAnimation.setEndValue(0.0);
+    d->showHideAnimation.start();
+    d->showHideAnimation.disconnect(this);
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::finished,
+            this,
+            &PushButton::hide);
+    if (parentWidget()) {
+        connect(&d->showHideAnimation,
+                SIGNAL(finished()),
+                parentWidget()->layout(),
+                SLOT(animate()));
+    }
+}
 
-void PushButton::showAnimated() {}
+void PushButton::showAnimated()
+{
+    Q_D(PushButton);
+    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped)
+        d->showHideAnimation.stop();
+    d->showHideAnimation.setStartValue(0.0);
+    d->showHideAnimation.setEndValue(1.0);
+    d->showHideAnimation.start();
+    d->showHideAnimation.disconnect(this);
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::finished,
+            this,
+            &PushButton::show);
+    if (parentWidget()) {
+        connect(&d->showHideAnimation,
+                SIGNAL(finished()),
+                parentWidget()->layout(),
+                SLOT(animate()));
+    }
+}
 
 ACAYIPWIDGETS_END_NAMESPACE

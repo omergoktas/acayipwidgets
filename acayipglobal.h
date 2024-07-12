@@ -9,6 +9,7 @@
 #include <QBrush>
 #include <QPainter>
 #include <QPen>
+#include <QEasingCurve>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -39,7 +40,8 @@ struct StyleDefaults
     static constexpr qreal margins = 0.0;
     static constexpr qreal paddings = 10.0;
     static constexpr qreal spacing = 2.0;
-    static constexpr int animationDuration = 500;
+    static constexpr int animationDuration = 300;
+    static constexpr QEasingCurve::Type easingType = QEasingCurve::OutCubic;
     static constexpr int borderRadiusIsPercentage = 1000.0;
     static inline const ButtonStyles buttonStyles = {
         .rest = {

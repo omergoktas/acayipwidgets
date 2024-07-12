@@ -36,8 +36,8 @@ void BoxLayoutPrivate::updateAnimations()
             auto animation = new QPropertyAnimation(widget,
                                                     "geometry",
                                                     animationGroup.data());
-            animation->setDuration(500);
-            animation->setEasingCurve(QEasingCurve::OutExpo);
+            animation->setDuration(StyleDefaults::animationDuration);
+            animation->setEasingCurve(StyleDefaults::easingType);
             animations[widget] = animation;
             animationGroup->addAnimation(animation);
         }
