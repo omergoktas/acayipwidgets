@@ -19,6 +19,7 @@
 #include <QTextDocument>
 #include <QTextLine>
 #include <QVariantAnimation>
+#include <QPropertyAnimation>
 #include <QPointer>
 
 class QGraphicsDropShadowEffect;
@@ -60,6 +61,7 @@ public:
     QBrush rippleBrush;
     QBrush rippleBrushDark;
     QPointer<QGraphicsDropShadowEffect> shadowEffect;
+    QPropertyAnimation shadowAnimation;
     QList<QVariantAnimation*> rippleAnimations;
 };
 

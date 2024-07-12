@@ -10,6 +10,8 @@
 #include <QTextBlock>
 #include <QTextCursor>
 
+using namespace Qt::Literals;
+
 /*
  * TODO: Remove QAbstractButtonPrivate implementation down below once
  * QPushButtonPrivate moves its constructor function over to .cpp file
@@ -92,10 +94,15 @@ void PushButtonPrivate::init()
     }
 
     shadowEffect = new QGraphicsDropShadowEffect(q);
-    shadowEffect->setColor(QColor(0, 0, 0, 60));
-    shadowEffect->setBlurRadius(10);
+    shadowEffect->setColor(QColor(0, 0, 0, 80));
+    shadowEffect->setBlurRadius(8);
     shadowEffect->setOffset(0, 0.1);
     q->setGraphicsEffect(shadowEffect);
+
+    shadowAnimation.setTargetObject(shadowEffect);
+    shadowAnimation.setDuration(250);
+    shadowAnimation.setPropertyName("yOffset"_ba);
+    shadowAnimation.setEasingCurve(QEasingCurve::OutQuad);
 }
 
 /*!
@@ -484,8 +491,10 @@ void PushButton::setElevated(bool elevated)
 {
     Q_D(PushButton);
     d->elevated = elevated;
-    if (d->shadowEffect)
-        d->shadowEffect->setBlurRadius(elevated ? 80 : 10);
+    if (d->shadowEffect) {
+        d->shadowEffect->setBlurRadius(elevated ? 40 : 8);
+        d->shadowEffect->setColor(QColor(0, 0, 0, elevated ? 160 : 80));
+    }
 }
 
 bool PushButton::isElevated() const
@@ -697,13 +706,23 @@ void PushButton::paintEvent(QPaintEvent*)
         }
     }
 
-    if (d->shadowEffect) {
-        if (d->isRippling()) {
-            d->shadowEffect->setYOffset(3.2 * t);
-        } else if (d->hovering) {
-            d->shadowEffect->setYOffset(3.2);
-        } else {
-            d->shadowEffect->setYOffset(0.1);
+    if (d->shadowEffect && d->mouseAttached) {
+        if (d->hovering) {
+            if (d->isRippling()) {
+                d->shadowEffect->setYOffset(3 * t);
+            } else if (d->shadowEffect->yOffset() != 3) {
+                if (d->shadowAnimation.state() != QAbstractAnimation::Stopped)
+                    d->shadowAnimation.stop();
+                d->shadowAnimation.setStartValue(d->shadowEffect->yOffset());
+                d->shadowAnimation.setEndValue(3);
+                d->shadowAnimation.start();
+            }
+        } else if (d->shadowEffect->yOffset() != 0.1) {
+            if (d->shadowAnimation.state() != QAbstractAnimation::Stopped)
+                d->shadowAnimation.stop();
+            d->shadowAnimation.setStartValue(d->shadowEffect->yOffset());
+            d->shadowAnimation.setEndValue(0.1);
+            d->shadowAnimation.start();
         }
     }
 
