@@ -8,6 +8,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QLayout>
 #include <QStyleHints>
+#include <QTimer>
 
 using namespace Qt::Literals;
 
@@ -105,7 +106,13 @@ void PushButtonPrivate::init()
     shadowAnimation.setEasingCurve(StyleDefaults::outEasingType);
 
     showHideAnimation.setDuration(StyleDefaults::animationDuration);
-    showHideAnimation.setEasingCurve(StyleDefaults::inEasingType);
+    showHideAnimation.setEasingCurve(StyleDefaults::outEasingType);
+
+    QObject::connect(q, &PushButton::clicked, q, [q] {
+        QTimer::singleShot(StyleDefaults::animationDuration,
+                           q,
+                           &PushButton::animatedClicked);
+    });
 }
 
 /*!

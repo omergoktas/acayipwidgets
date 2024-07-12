@@ -59,6 +59,9 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
+signals:
+    void animatedClicked();
+
 public slots:
     void hideAnimated();
     void showAnimated();
