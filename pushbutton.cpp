@@ -88,8 +88,9 @@ void PushButtonPrivate::init()
         // We ripple half the time and fade half the time
         anim->setDuration(StyleDefaults::animationDuration * 2);
         anim->setEasingCurve(StyleDefaults::outEasingType);
-        QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q] {
-            q->update();
+        QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q, this] {
+            updateHoverShadow();
+            q->repaint();
         });
     }
 
@@ -305,6 +306,37 @@ qreal PushButtonPrivate::shortestActiveRippleAnimationTime() const
         }
     }
     return t;
+}
+
+void PushButtonPrivate::updateHoverShadow()
+{
+    if (hoverShadowEnabled && shadowEffect && mouseAttached) {
+        static constexpr qreal offset = 3;
+        const qreal t = shortestActiveRippleAnimationTime();
+        if (hovering) {
+            if (isRippling()) {
+                shadowEffect->setYOffset(offset * t);
+            } else if (shadowEffect->yOffset() != offset) {
+                if (shadowAnimation.state() != QAbstractAnimation::Stopped) {
+                    if (shadowAnimation.endValue() == offset)
+                        return;
+                    shadowAnimation.stop();
+                }
+                shadowAnimation.setStartValue(shadowEffect->yOffset());
+                shadowAnimation.setEndValue(offset);
+                shadowAnimation.start();
+            }
+        } else if (shadowEffect->yOffset() != 0) {
+            if (shadowAnimation.state() != QAbstractAnimation::Stopped) {
+                if (shadowAnimation.endValue() == 0)
+                    return;
+                shadowAnimation.stop();
+            }
+            shadowAnimation.setStartValue(shadowEffect->yOffset());
+            shadowAnimation.setEndValue(0);
+            shadowAnimation.start();
+        }
+    }
 }
 
 /*!
@@ -591,11 +623,13 @@ bool PushButton::event(QEvent* event)
         d->hovering = false;
         d->cursor = cursor();
         setCursor(Qt::ArrowCursor);
-        update();
+        d->updateHoverShadow();
+        repaint();
     } else if (event->type() == QEvent::HoverLeave) {
         d->hovering = false;
         setCursor(d->cursor);
-        update();
+        d->updateHoverShadow();
+        repaint();
     } else if (event->type() == QEvent::HoverMove) {
         auto hover = static_cast<QHoverEvent*>(event);
         if (hitButton(hover->position().toPoint())) {
@@ -606,7 +640,8 @@ bool PushButton::event(QEvent* event)
             d->hovering = false;
             setCursor(Qt::ArrowCursor);
         }
-        update();
+        d->updateHoverShadow();
+        repaint();
     }
 
     return QPushButton::event(event);
@@ -745,27 +780,6 @@ void PushButton::paintEvent(QPaintEvent*)
                                               : QMarginsF{}));
                 painter.drawEllipse(ripRect);
             }
-        }
-    }
-
-    if (d->hoverShadowEnabled && d->shadowEffect && d->mouseAttached) {
-        static constexpr qreal offset = 3;
-        if (d->hovering) {
-            if (d->isRippling()) {
-                d->shadowEffect->setYOffset(offset * t);
-            } else if (d->shadowEffect->yOffset() != offset) {
-                if (d->shadowAnimation.state() != QAbstractAnimation::Stopped)
-                    d->shadowAnimation.stop();
-                d->shadowAnimation.setStartValue(d->shadowEffect->yOffset());
-                d->shadowAnimation.setEndValue(offset);
-                d->shadowAnimation.start();
-            }
-        } else if (d->shadowEffect->yOffset() != 0) {
-            if (d->shadowAnimation.state() != QAbstractAnimation::Stopped)
-                d->shadowAnimation.stop();
-            d->shadowAnimation.setStartValue(d->shadowEffect->yOffset());
-            d->shadowAnimation.setEndValue(0);
-            d->shadowAnimation.start();
         }
     }
 

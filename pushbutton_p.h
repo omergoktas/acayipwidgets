@@ -43,6 +43,7 @@ public:
     const ButtonStyle& activeStyle() const;
     bool isRippling() const;
     qreal shortestActiveRippleAnimationTime() const;
+    void updateHoverShadow();
 
     bool mouseAttached;
     bool hoverShadowEnabled;
