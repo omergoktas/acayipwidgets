@@ -5,7 +5,6 @@
 #include "utils_p.h"
 
 #include <QAbstractTextDocumentLayout>
-#include <QGraphicsDropShadowEffect>
 #include <QLayout>
 #include <QStyleHints>
 #include <QTimer>
@@ -750,14 +749,15 @@ void PushButton::paintEvent(QPaintEvent*)
     }
 
     if (d->hoverShadowEnabled && d->shadowEffect && d->mouseAttached) {
+        static constexpr qreal offset = 3;
         if (d->hovering) {
             if (d->isRippling()) {
-                d->shadowEffect->setYOffset(3 * t);
-            } else if (d->shadowEffect->yOffset() != 3) {
+                d->shadowEffect->setYOffset(offset * t);
+            } else if (d->shadowEffect->yOffset() != offset) {
                 if (d->shadowAnimation.state() != QAbstractAnimation::Stopped)
                     d->shadowAnimation.stop();
                 d->shadowAnimation.setStartValue(d->shadowEffect->yOffset());
-                d->shadowAnimation.setEndValue(3);
+                d->shadowAnimation.setEndValue(offset);
                 d->shadowAnimation.start();
             }
         } else if (d->shadowEffect->yOffset() != 0) {
