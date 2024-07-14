@@ -365,7 +365,6 @@ PushButton::PushButton(const QIcon& icon, const QString& text, QWidget* parent)
 {
     setText(text);
     setIcon(icon);
-    setText("hello <b>world");
 }
 
 /*!
@@ -785,12 +784,20 @@ void PushButton::paintEvent(QPaintEvent*)
 
     // Paint the icon
     if (!icon().isNull()) {
-        painter.setPen(darkStyle ? style.iconColorDark : style.iconColor);
+        QPixmap icoPixmap(d->icon.pixmap(iconSize(), devicePixelRatioF()));
+        const QColor& icoColor = darkStyle ? style.iconColorDark : style.iconColor;
+        if (icoColor.isValid()) {
+            QPainter p(&icoPixmap);
+            p.setRenderHints(painter.renderHints());
+            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            p.fillRect(icoPixmap.rect(), icoColor);
+        }
+        painter.setPen(Qt::NoPen);
         painter.setBrush(Qt::NoBrush);
         painter.setOpacity(o);
         painter.setClipRect(icoRect);
-        painter.drawPixmap(d->itemRect(PushButtonPrivate::Icon),
-                           d->icon.pixmap(iconSize(), devicePixelRatioF()),
+        painter.drawPixmap(icoRect,
+                           icoPixmap,
                            QRectF({}, iconSize() * devicePixelRatioF()));
     }
 
