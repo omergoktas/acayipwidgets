@@ -48,11 +48,11 @@ public:
     const ButtonStyles& styles() const;
     void setStyles(const ButtonStyles& styles);
 
-    void setElevated(bool elevated);
     bool isElevated() const;
+    void setElevated(bool elevated);
 
-    void setHoverShadowEnabled(bool hoverShadowEnabled);
     bool isHoverShadowEnabled() const;
+    void setHoverShadowEnabled(bool hoverShadowEnabled);
 
     void setText(const QString& text);
 

@@ -12,6 +12,11 @@
 using namespace Qt::Literals;
 
 /*
+ * TODO: QGraphicsDropShadowEffect causes vibrations when hovered, especially
+ * visible when the button has an icon
+*/
+
+/*
  * TODO: Remove QAbstractButtonPrivate implementation down below once
  * QPushButtonPrivate moves its constructor function over to .cpp file
 */
@@ -442,6 +447,7 @@ void PushButton::setIconEdge(Qt::Edge iconEdge)
 {
     Q_D(PushButton);
     d->iconEdge = iconEdge;
+    updateGeometry();
     update();
 }
 
@@ -501,6 +507,12 @@ void PushButton::setStyles(const ButtonStyles& styles)
     update();
 }
 
+bool PushButton::isElevated() const
+{
+    Q_D(const PushButton);
+    return d->elevated;
+}
+
 void PushButton::setElevated(bool elevated)
 {
     Q_D(PushButton);
@@ -511,7 +523,7 @@ void PushButton::setElevated(bool elevated)
     }
 }
 
-bool PushButton::isElevated() const
+bool PushButton::isHoverShadowEnabled() const
 {
     Q_D(const PushButton);
     return d->elevated;
@@ -521,13 +533,7 @@ void PushButton::setHoverShadowEnabled(bool hoverShadowEnabled)
 {
     Q_D(PushButton);
     d->hoverShadowEnabled = hoverShadowEnabled;
-    update();
-}
-
-bool PushButton::isHoverShadowEnabled() const
-{
-    Q_D(const PushButton);
-    return d->elevated;
+    d->updateHoverShadow();
 }
 
 void PushButton::setText(const QString& text)
@@ -569,17 +575,26 @@ QSize PushButton::minimumSizeHint() const
 void PushButton::hideAnimated()
 {
     Q_D(PushButton);
-    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped)
+    if (!isVisible())
+        return;
+    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped) {
+        if (d->showHideAnimation.endValue() == 0.0)
+            return;
         d->showHideAnimation.stop();
+    }
+    d->showHideAnimation.disconnect();
     d->showHideAnimation.setStartValue(1.0);
     d->showHideAnimation.setEndValue(0.0);
-    d->showHideAnimation.start();
-    d->showHideAnimation.disconnect(this);
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::valueChanged,
+            this,
+            qOverload<>(&QWidget::repaint));
     connect(&d->showHideAnimation,
             &QVariantAnimation::finished,
             this,
             &PushButton::hide);
-    if (parentWidget()) {
+    d->showHideAnimation.start();
+    if (parentWidget() && parentWidget()->layout()) {
         connect(&d->showHideAnimation,
                 SIGNAL(finished()),
                 parentWidget()->layout(),
@@ -590,22 +605,24 @@ void PushButton::hideAnimated()
 void PushButton::showAnimated()
 {
     Q_D(PushButton);
-    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped)
+    if (isVisible())
+        return;
+    if (d->showHideAnimation.state() != QAbstractAnimation::Stopped) {
+        if (d->showHideAnimation.endValue() == 1.0)
+            return;
         d->showHideAnimation.stop();
+    }
+    d->showHideAnimation.disconnect();
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::valueChanged,
+            this,
+            qOverload<>(&QWidget::repaint));
     d->showHideAnimation.setStartValue(0.0);
     d->showHideAnimation.setEndValue(1.0);
     d->showHideAnimation.start();
-    d->showHideAnimation.disconnect(this);
-    connect(&d->showHideAnimation,
-            &QVariantAnimation::finished,
-            this,
-            &PushButton::show);
-    if (parentWidget()) {
-        connect(&d->showHideAnimation,
-                SIGNAL(finished()),
-                parentWidget()->layout(),
-                SLOT(animate()));
-    }
+    show();
+    if (parentWidget() && parentWidget()->layout())
+        QMetaObject::invokeMethod(parentWidget()->layout(), "animate");
 }
 
 bool PushButton::hitButton(const QPoint& pos) const
