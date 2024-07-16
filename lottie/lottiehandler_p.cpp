@@ -37,12 +37,19 @@ bool LottieHandler::read(QImage* image)
         return false;
 
     // Create a temporary image to render the frame
-    QImage tempImage(m_size, QImage::Format_ARGB32_Premultiplied);
+    QImage tempImage(m_scaledSize.isValid() ? m_scaledSize : m_size,
+                     QImage::Format_ARGB32_Premultiplied);
     tempImage.fill(Qt::transparent);
+
+    qreal sx = m_scaledSize.isValid() ? m_scaledSize.width() / qreal(m_size.width())
+                                      : 1.0;
+    qreal sy = m_scaledSize.isValid() ? m_scaledSize.height() / qreal(m_size.height())
+                                      : 1.0;
 
     // Create a painter for the temporary image
     QPainter painter(&tempImage);
     painter.setRenderHints(StyleDefaults::renderHints);
+    painter.scale(sx, sy);
 
     // Create a LottieRasterRenderer
     LottieRasterRenderer renderer(&painter);
@@ -71,6 +78,8 @@ QVariant LottieHandler::option(ImageOption option) const
     switch (option) {
     case Size:
         return m_size;
+    case ScaledSize:
+        return m_scaledSize;
     case Animation:
         return true;
     case ImageFormat:
@@ -82,13 +91,14 @@ QVariant LottieHandler::option(ImageOption option) const
 
 void LottieHandler::setOption(ImageOption option, const QVariant& value)
 {
-    Q_UNUSED(option);
-    Q_UNUSED(value);
+    if (option == ScaledSize)
+        m_scaledSize = value.toSize();
 }
 
 bool LottieHandler::supportsOption(ImageOption option) const
 {
-    return option == Size || option == Animation || option == ImageFormat;
+    return option == Size || option == ScaledSize || option == Animation
+           || option == ImageFormat;
 }
 
 int LottieHandler::imageCount() const

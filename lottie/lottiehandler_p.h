@@ -43,6 +43,7 @@ private:
     mutable QSize m_size;
     mutable QVersionNumber m_version;
     mutable BMBase m_rootElement;
+    QSize m_scaledSize;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
