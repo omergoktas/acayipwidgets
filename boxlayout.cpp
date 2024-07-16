@@ -6,6 +6,8 @@
 
 #include <QWidget>
 
+using namespace Qt::Literals;
+
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 BoxLayoutPrivate::BoxLayoutPrivate(BoxLayout* q_ptr)
@@ -39,7 +41,7 @@ void BoxLayoutPrivate::updateAnimations()
 
     for (QWidget* widget : std::as_const(widgets)) {
         if (!animations.contains(widget)) {
-            auto animation = new QPropertyAnimation(widget, "geometry", &animationGroup);
+            auto animation = new QPropertyAnimation(widget, "geometry"_ba, &animationGroup);
             animation->setDuration(StyleDefaults::animationDuration);
             animation->setEasingCurve(StyleDefaults::outEasingType);
             animations[widget] = animation;

@@ -13,28 +13,47 @@ find_package(Qt${QT_VERSION_MAJOR}
     REQUIRED
         Widgets
         Svg
+        BodymovinPrivate
 )
 
 qt_add_library(acayipwidgets
     acayipglobal.h
+    icon.h
+    icon.cpp
     boxlayout.h
     boxlayout.cpp
-    pushbutton.h
-    pushbutton.cpp
+    button.h
+    button.cpp
 )
 
 target_sources(acayipwidgets PRIVATE
-    acayipstyle_p_p.h
-    acayipstyle_p.h
-    acayipstyle_p.cpp
-    acayipstyleplugin_p.h
-    acayipstyleplugin_p.cpp
-    acayipstyle.json
+    acayipstyle/acayipstyle_p_p.h
+    acayipstyle/acayipstyle_p.h
+    acayipstyle/acayipstyle_p.cpp
+    acayipstyle/acayipstyleplugin_p.h
+    acayipstyle/acayipstyleplugin_p.cpp
+    acayipstyle/acayipstyle.json
+    lottie/lottiehandler_p.cpp
+    lottie/lottiehandler_p.h
+    lottie/lottieplugin_p.h
+    lottie/lottieplugin_p.cpp
+    lottie/lottierasterrenderer_p.cpp
+    lottie/lottierasterrenderer_p.h
+    lottie/lottie.json
     utils_p.h
     utils_p.cpp
     boxlayout_p.h
-    acayipstyle_p.h
-    pushbutton_p.h
+    button_p.h
+)
+
+file(GLOB_RECURSE resources
+    CONFIGURE_DEPENDS RELATIVE
+    ${CMAKE_CURRENT_SOURCE_DIR} assets/*
+)
+
+qt_add_resources(acayipwidgets acayipwidgets_assets
+    PREFIX /acayipwidgets
+    FILES ${resources}
 )
 
 target_include_directories(acayipwidgets
@@ -51,6 +70,7 @@ target_link_libraries(acayipwidgets
         Qt::WidgetsPrivate
     PRIVATE
         Qt::Svg
+        Qt::BodymovinPrivate
 )
 
 target_compile_definitions(acayipwidgets PRIVATE QT_STATICPLUGIN)

@@ -4,12 +4,14 @@
 #include "acayipstyle_p.h"
 #include "acayipstyle_p_p.h"
 
+#include <private/qabstractanimation_p.h>
+
 #include <QPixmapCache>
 #include <QStyleHints>
 
-ACAYIPWIDGETS_BEGIN_NAMESPACE
-
 using namespace Qt::Literals;
+
+ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 /*!
  *  \internal
@@ -34,6 +36,8 @@ AcayipStylePrivate::AcayipStylePrivate() {}
 AcayipStyle::AcayipStyle()
     : QCommonStyle(*new AcayipStylePrivate)
 {
+    QUnifiedTimer::instance()->setTimingInterval(8);
+    QUnifiedTimer::instance()->setConsistentTiming(true);
     setObjectName("Acayip"_L1);
     connect(QGuiApplication::styleHints(),
             &QStyleHints::colorSchemeChanged,
