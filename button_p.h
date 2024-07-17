@@ -1,0 +1,71 @@
+// Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
+// SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
+
+/*
+ * WARNING: This file exists purely as a private implementation
+ * detail. This header file may change from version to version
+ * without notice or even be removed.
+*/
+
+#pragma once
+
+#include <acayipglobal.h>
+
+#include "button.h"
+
+#include <private/qpushbutton_p.h>
+
+#include <QColor>
+#include <QPointer>
+#include <QPropertyAnimation>
+#include <QTextDocument>
+#include <QTextLine>
+#include <QVariantAnimation>
+
+class QGraphicsDropShadowEffect;
+
+ACAYIPWIDGETS_BEGIN_NAMESPACE
+
+class ButtonPrivate : public QPushButtonPrivate
+{
+    Q_DECLARE_PUBLIC(Button)
+
+public:
+    ButtonPrivate();
+    enum Item { Background, Icon, Menu, Text };
+    void init();
+    void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
+    void updateTextDocumentContent();
+    QRectF itemRect(Item item) const;
+    qreal calculateRadius(int value) const;
+    void startRippleAnimation(const QPoint& pos);
+    QPainterPath backgroundPath(const QMarginsF& margins = QMarginsF()) const;
+    const ButtonStyle& activeStyle() const;
+    bool isRippling() const;
+    qreal shortestActiveRippleAnimationTime() const;
+    void updateHoverShadow();
+
+    bool mouseAttached;
+    bool hoverShadowEnabled;
+    bool elevated;
+    qreal opacity;
+    qreal spacing;
+    QMarginsF margins;
+    QMarginsF paddings;
+    Qt::Edge iconEdge;
+    Qt::TextFormat textFormat;
+    ButtonStyles styles;
+    ButtonStyles stylesPainted;
+    QTextDocument textDocument;
+    QSizeF textDocumentSizeHint;
+    QCursor cursor;
+    QBrush rippleBrush;
+    QBrush rippleBrushDark;
+    QIcon menuArrow;
+    QPointer<QGraphicsDropShadowEffect> shadowEffect;
+    QPropertyAnimation shadowAnimation;
+    QVariantAnimation showHideAnimation;
+    QList<QVariantAnimation*> rippleAnimations;
+};
+
+ACAYIPWIDGETS_END_NAMESPACE

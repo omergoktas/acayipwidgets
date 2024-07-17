@@ -1,59 +1,10 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-#include "acayipstyle_p.h"
-#include "acayipstyle_p_p.h"
+#include "acayipstyle.h"
 
-#include <private/qabstractanimation_p.h>
-
-#include <QPixmapCache>
 #include <QStyleHints>
-
-using namespace Qt::Literals;
-
-ACAYIPWIDGETS_BEGIN_NAMESPACE
-
-/*!
- *  \internal
-*/
-AcayipStylePrivate::AcayipStylePrivate() {}
-
-/*!
-    \class AcayipStyle
-    \brief The AcayipStyle is a custom widget style from the Acayip Widgets
-
-    \inmodule AcayipWidgets
-    \internal
-
-    The AcayipStyle style provides a custom look and feel that is not
-    tied to a particular platform.
-    \sa QStyle, QWindowsStyle, QFusionStyle, QCommonStyle
-*/
-
-/*!
-    Constructs an AcayipStyle object.
-*/
-AcayipStyle::AcayipStyle()
-    : QCommonStyle(*new AcayipStylePrivate)
-{
-    QUnifiedTimer::instance()->setTimingInterval(8);
-    QUnifiedTimer::instance()->setConsistentTiming(true);
-    setObjectName("Acayip"_L1);
-    connect(QGuiApplication::styleHints(),
-            &QStyleHints::colorSchemeChanged,
-            this,
-            &AcayipStyle::onColorSchemeChanged);
-    onColorSchemeChanged();
-}
-
-/*!
-    \internal
-
-    Constructs an AcayipStyle object.
-*/
-AcayipStyle::AcayipStyle(AcayipStylePrivate& dd)
-    : QCommonStyle(dd)
-{}
+#include <QGuiApplication>
 
 QPalette AcayipStyle::standardPalette() const
 {
@@ -121,11 +72,3 @@ QPalette AcayipStyle::standardPalette() const
                ? darkPalette
                : lightPalette;
 }
-
-void AcayipStyle::onColorSchemeChanged() const
-{
-    QGuiApplication::setPalette(standardPalette());
-    QPixmapCache::clear(); // Cached QIcon pixmaps make use of the old palette
-}
-
-ACAYIPWIDGETS_END_NAMESPACE

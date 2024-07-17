@@ -1,8 +1,8 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-#include "lottiehandler_p.h"
-#include "lottierasterrenderer_p.h"
+#include "lottieiohandler.h"
+#include "lottierasterrenderer.h"
 
 #include <QtBodymovin/private/bmlayer_p.h>
 
@@ -12,23 +12,21 @@
 
 using namespace Qt::Literals;
 
-ACAYIPWIDGETS_BEGIN_NAMESPACE
-
-LottieHandler::LottieHandler()
+LottieIOHandler::LottieIOHandler()
     : m_startFrame(0)
     , m_endFrame(0)
     , m_currentFrame(0)
     , m_frameRate(30)
 {}
 
-bool LottieHandler::canRead() const
+bool LottieIOHandler::canRead() const
 {
     if (!device())
         return false;
     return load();
 }
 
-bool LottieHandler::read(QImage* image)
+bool LottieIOHandler::read(QImage* image)
 {
     if (!canRead())
         return false;
@@ -48,7 +46,9 @@ bool LottieHandler::read(QImage* image)
 
     // Create a painter for the temporary image
     QPainter painter(&tempImage);
-    painter.setRenderHints(StyleDefaults::renderHints);
+    painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing
+                           | QPainter::SmoothPixmapTransform
+                           | QPainter::LosslessImageRendering);
     painter.scale(sx, sy);
 
     // Create a LottieRasterRenderer
@@ -73,7 +73,7 @@ bool LottieHandler::read(QImage* image)
     return true;
 }
 
-QVariant LottieHandler::option(ImageOption option) const
+QVariant LottieIOHandler::option(ImageOption option) const
 {
     switch (option) {
     case Size:
@@ -89,47 +89,47 @@ QVariant LottieHandler::option(ImageOption option) const
     }
 }
 
-void LottieHandler::setOption(ImageOption option, const QVariant& value)
+void LottieIOHandler::setOption(ImageOption option, const QVariant& value)
 {
     if (option == ScaledSize)
         m_scaledSize = value.toSize();
 }
 
-bool LottieHandler::supportsOption(ImageOption option) const
+bool LottieIOHandler::supportsOption(ImageOption option) const
 {
     return option == Size || option == ScaledSize || option == Animation
            || option == ImageFormat;
 }
 
-int LottieHandler::imageCount() const
+int LottieIOHandler::imageCount() const
 {
     if (canRead())
         return m_endFrame - m_startFrame + 1;
     return 0;
 }
 
-int LottieHandler::loopCount() const
+int LottieIOHandler::loopCount() const
 {
     if (canRead())
         return 1;
     return 0;
 }
 
-int LottieHandler::nextImageDelay() const
+int LottieIOHandler::nextImageDelay() const
 {
     if (canRead())
         return 1000.0 / m_frameRate;
     return 0;
 }
 
-int LottieHandler::currentImageNumber() const
+int LottieIOHandler::currentImageNumber() const
 {
     if (canRead())
         return m_currentFrame - m_startFrame;
     return -1;
 }
 
-bool LottieHandler::jumpToNextImage()
+bool LottieIOHandler::jumpToNextImage()
 {
     if (canRead() && m_currentFrame < m_endFrame) {
         m_currentFrame++;
@@ -138,7 +138,7 @@ bool LottieHandler::jumpToNextImage()
     return false;
 }
 
-bool LottieHandler::jumpToImage(int imageNumber)
+bool LottieIOHandler::jumpToImage(int imageNumber)
 {
     if (canRead()) {
         int frame = m_startFrame + imageNumber;
@@ -150,7 +150,7 @@ bool LottieHandler::jumpToImage(int imageNumber)
     return false;
 }
 
-bool LottieHandler::load() const
+bool LottieIOHandler::load() const
 {
     if (m_rootElement.children().size() > 0)
         return true;
@@ -164,7 +164,7 @@ bool LottieHandler::load() const
     return true;
 }
 
-bool LottieHandler::parse(const QByteArray& jsonSource) const
+bool LottieIOHandler::parse(const QByteArray& jsonSource) const
 {
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(jsonSource, &error);
@@ -217,5 +217,3 @@ bool LottieHandler::parse(const QByteArray& jsonSource) const
 
     return true;
 }
-
-ACAYIPWIDGETS_END_NAMESPACE

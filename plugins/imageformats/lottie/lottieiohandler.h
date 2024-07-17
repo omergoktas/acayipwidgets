@@ -3,19 +3,17 @@
 
 #pragma once
 
-#include <acayipglobal.h>
-
 #include <QtBodymovin/private/bmbase_p.h>
 
 #include <QImageIOHandler>
 #include <QVersionNumber>
 
-ACAYIPWIDGETS_BEGIN_NAMESPACE
-
-class LottieHandler : public QImageIOHandler
+class LottieIOHandler final : public QImageIOHandler
 {
+    Q_DISABLE_COPY(LottieIOHandler)
+
 public:
-    LottieHandler();
+    LottieIOHandler();
 
     bool canRead() const override;
     bool read(QImage* image) override;
@@ -45,5 +43,3 @@ private:
     mutable BMBase m_rootElement;
     QSize m_scaledSize;
 };
-
-ACAYIPWIDGETS_END_NAMESPACE

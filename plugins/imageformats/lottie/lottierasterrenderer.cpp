@@ -2,7 +2,7 @@
 // Copyright (C) 2024 Ömer Göktaş.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "lottierasterrenderer_p.h"
+#include "lottierasterrenderer.h"
 
 #include <QBrush>
 #include <QGradient>
@@ -24,8 +24,6 @@
 #include <QtBodymovin/private/bmshape_p.h>
 #include <QtBodymovin/private/bmshapetransform_p.h>
 #include <QtBodymovin/private/bmtrimpath_p.h>
-
-ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 LottieRasterRenderer::LottieRasterRenderer(QPainter* painter)
     : m_painter(painter)
@@ -335,5 +333,3 @@ void LottieRasterRenderer::applyRepeaterTransform(int instance)
 
     m_painter->setOpacity(m_painter->opacity() * o);
 }
-
-ACAYIPWIDGETS_END_NAMESPACE

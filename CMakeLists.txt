@@ -13,50 +13,36 @@ find_package(Qt${QT_VERSION_MAJOR}
     REQUIRED
         Widgets
         Svg
-        BodymovinPrivate
 )
 
-qt_add_library(acayipwidgets
+qt_add_library(AcayipWidgets
     acayipglobal.h
-    icon.h
-    icon.cpp
     boxlayout.h
     boxlayout.cpp
     button.h
     button.cpp
 )
 
-target_sources(acayipwidgets PRIVATE
-    acayipstyle/acayipstyle_p_p.h
-    acayipstyle/acayipstyle_p.h
-    acayipstyle/acayipstyle_p.cpp
-    acayipstyle/acayipstyleplugin_p.h
-    acayipstyle/acayipstyleplugin_p.cpp
-    acayipstyle/acayipstyle.json
-    lottie/lottiehandler_p.cpp
-    lottie/lottiehandler_p.h
-    lottie/lottieplugin_p.h
-    lottie/lottieplugin_p.cpp
-    lottie/lottierasterrenderer_p.cpp
-    lottie/lottierasterrenderer_p.h
-    lottie/lottie.json
+target_sources(AcayipWidgets PRIVATE
     utils_p.h
     utils_p.cpp
     boxlayout_p.h
     button_p.h
 )
 
+add_subdirectory(plugins)
+
 file(GLOB_RECURSE resources
     CONFIGURE_DEPENDS RELATIVE
     ${CMAKE_CURRENT_SOURCE_DIR} assets/*
 )
 
-qt_add_resources(acayipwidgets acayipwidgets_assets
+qt_add_resources(AcayipWidgets acayipwidgets_assets
     PREFIX /acayipwidgets
     FILES ${resources}
 )
 
-target_include_directories(acayipwidgets
+target_include_directories(AcayipWidgets
     PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR} # acayipwidgets_export.h, acayipconfig.h
     INTERFACE
@@ -65,15 +51,16 @@ target_include_directories(acayipwidgets
         ${CMAKE_CURRENT_SOURCE_DIR} # acayipglobal.h
 )
 
-target_link_libraries(acayipwidgets
+target_link_libraries(AcayipWidgets
     PUBLIC
-        Qt::WidgetsPrivate
+        Qt::Widgets
     PRIVATE
         Qt::Svg
-        Qt::BodymovinPrivate
+        Qt::WidgetsPrivate
+        AcayipStylePlugin
+        LottieIOPlugin
+        PixelPerfectIconEnginePlugin
 )
-
-target_compile_definitions(acayipwidgets PRIVATE QT_STATICPLUGIN)
 
 set(ACAYIPWIDGETS_NAMESPACE "Acayip" CACHE STRING "Acayip Widgets namespace")
 if(ACAYIPWIDGETS_NAMESPACE STREQUAL "")
@@ -83,4 +70,4 @@ else()
 endif()
 configure_file(acayipconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/acayipconfig.h @ONLY)
 
-generate_export_header(acayipwidgets)
+generate_export_header(AcayipWidgets)

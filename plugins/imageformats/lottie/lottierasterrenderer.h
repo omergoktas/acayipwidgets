@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <acayipglobal.h>
-
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegion>
@@ -15,13 +13,10 @@
 
 class QPainter;
 
-ACAYIPWIDGETS_BEGIN_NAMESPACE
-
-class LottieRasterRenderer : public LottieRenderer
+class LottieRasterRenderer final : public LottieRenderer
 {
 public:
     explicit LottieRasterRenderer(QPainter* m_painter);
-    ~LottieRasterRenderer() override = default;
 
     void saveState() override;
     void restoreState() override;
@@ -44,8 +39,6 @@ public:
 protected:
     QPainter* m_painter = nullptr;
     QPainterPath m_unitedPath;
-    // TODO: create a context to handle paths and effect
-    // instead of pushing each to a stack independently
     QStack<QPainterPath> m_pathStack;
     QStack<const BMFillEffect*> m_fillEffectStack;
     const BMFillEffect* m_fillEffect = nullptr;
@@ -58,5 +51,3 @@ protected:
 private:
     void applyRepeaterTransform(int instance);
 };
-
-ACAYIPWIDGETS_END_NAMESPACE
