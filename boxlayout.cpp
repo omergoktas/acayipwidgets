@@ -42,8 +42,8 @@ void BoxLayoutPrivate::updateAnimations()
     for (QWidget* widget : std::as_const(widgets)) {
         if (!animations.contains(widget)) {
             auto animation = new QPropertyAnimation(widget, "geometry"_ba, &animationGroup);
-            animation->setDuration(StyleDefaults::animationDuration);
-            animation->setEasingCurve(StyleDefaults::outEasingType);
+            animation->setDuration(Defaults::animationDuration);
+            animation->setEasingCurve(Defaults::outEasingType);
             animations[widget] = animation;
             animationGroup.addAnimation(animation);
         }

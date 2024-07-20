@@ -3,13 +3,12 @@
 
 #pragma once
 
-#include <acayipconfig.h>
-#include <acayipwidgets_export.h>
+#include <acayiputils.h>
 
 #include <QBrush>
+#include <QEasingCurve>
 #include <QPainter>
 #include <QPen>
-#include <QEasingCurve>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -35,49 +34,22 @@ struct ButtonStyles
     ButtonStyle disabled;
 };
 
-struct StyleDefaults
+class ACAYIPWIDGETS_EXPORT Defaults
 {
-    static constexpr qreal margins = 0.0;
-    static constexpr qreal paddings = 8.0;
-    static constexpr qreal spacing = 2.0;
-    static constexpr int animationDuration = 300;
-    static constexpr QEasingCurve::Type outEasingType = QEasingCurve::OutCubic;
-    static constexpr QEasingCurve::Type inEasingType = QEasingCurve::InCubic;
-    static constexpr int borderRadiusIsPercentage = 1000.0;
-    static inline const ButtonStyles buttonStyles = {
-        .rest = {
-            .borderRadius = borderRadiusIsPercentage + 100,
-            .textColor = QColor(0xffffff),
-            .textColorDark = QColor(0xffffff),
-            .iconColor = QColor(0xffffff),
-            .iconColorDark = QColor(0xffffff),
-            .backgroundBrush = QColor(0x0f6cbd),
-            .backgroundBrushDark = QColor(0x115ea3)
-        },
-        .hovered = {
-            .backgroundBrush = QColor(0x115ea3),
-            .backgroundBrushDark = QColor(0x0f6cbd)
-        },
-        .pressed = {
-            .backgroundBrush = QColor(0x0c3b5e),
-            .backgroundBrushDark = QColor(0x0f6cbd)
-        },
-        .checked = {
-            .backgroundBrush = QColor(0x0f548c),
-            .backgroundBrushDark = QColor(0x0f548c)
-        },
-        .disabled = {
-            .textColor = QColor(0xbdbdbd),
-            .textColorDark = QColor(0x5c5c5c),
-            .iconColor = QColor(0xbdbdbd),
-            .iconColorDark = QColor(0x5c5c5c),
-            .backgroundBrush = QColor(0xf0f0f0),
-            .backgroundBrushDark = QColor(0x141414)
-        }
-    };
-    static constexpr QPainter::RenderHints renderHints{
-        QPainter::Antialiasing | QPainter::TextAntialiasing
-        | QPainter::SmoothPixmapTransform | QPainter::LosslessImageRendering};
+    friend class ButtonPrivate;
+
+    static const int borderRadiusPercentagePoint;
+
+public:
+    static qreal scaleFactor;
+    static int animationDuration;
+    static int margins;
+    static int paddings;
+    static int spacing;
+    static QEasingCurve::Type outEasingType;
+    static QEasingCurve::Type inEasingType;
+    static QPainter::RenderHints renderHints;
+    static ButtonStyles buttonStyles;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE

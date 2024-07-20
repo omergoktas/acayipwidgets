@@ -25,14 +25,14 @@ public:
     qreal opacity() const;
     void setOpacity(qreal opacity);
 
-    qreal spacing() const;
-    void setSpacing(qreal spacing);
+    int spacing() const;
+    void setSpacing(int spacing);
 
-    const QMarginsF& margins() const;
-    void setMargins(const QMarginsF& margins);
+    const QMargins& margins() const;
+    void setMargins(const QMargins& margins);
 
-    const QMarginsF& paddings() const;
-    void setPaddings(const QMarginsF& paddings);
+    const QMargins& paddings() const;
+    void setPaddings(const QMargins& paddings);
 
     Qt::Edge iconEdge() const;
     void setIconEdge(Qt::Edge iconEdge);

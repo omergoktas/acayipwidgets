@@ -13,7 +13,8 @@
 using namespace Qt::Literals;
 
 LottieIOHandler::LottieIOHandler()
-    : m_startFrame(0)
+    : QImageIOHandler()
+    , m_startFrame(0)
     , m_endFrame(0)
     , m_currentFrame(0)
     , m_frameRate(30)
@@ -77,6 +78,7 @@ QVariant LottieIOHandler::option(ImageOption option) const
 {
     switch (option) {
     case Size:
+        canRead();
         return m_size;
     case ScaledSize:
         return m_scaledSize;

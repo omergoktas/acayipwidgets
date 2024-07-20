@@ -39,6 +39,6 @@ QImageIOHandler* LottieIOPlugin::create(QIODevice* device,
     return handler;
 }
 
-Q_IMPORT_PLUGIN(LottieIOPlugin)
+Q_IMPORT_PLUGIN(LottieIOPlugin) // FIXME: Why are we being selected for png files?
 
 #include "main.moc"

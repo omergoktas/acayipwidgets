@@ -17,6 +17,9 @@ find_package(Qt${QT_VERSION_MAJOR}
 
 qt_add_library(AcayipWidgets
     acayipglobal.h
+    acayipglobal.cpp
+    acayiputils.h
+    acayiputils.cpp
     boxlayout.h
     boxlayout.cpp
     button.h
@@ -51,6 +54,8 @@ target_include_directories(AcayipWidgets
         ${CMAKE_CURRENT_SOURCE_DIR} # acayipglobal.h
 )
 
+# FIXME: Test the order of linkage as a mechanism to solve static initialization order
+# fiasco problem for the PixelPerfectIconEnginePlugin and to make it load first.
 target_link_libraries(AcayipWidgets
     PUBLIC
         Qt::Widgets

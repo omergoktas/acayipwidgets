@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "button_p.h"
-#include "utils_p.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QLayout>
@@ -56,15 +55,12 @@ ButtonPrivate::ButtonPrivate()
     , hoverShadowEnabled(true)
     , elevated(false)
     , opacity(1.0)
-    , spacing(StyleDefaults::spacing)
-    , margins(StyleDefaults::margins,
-              StyleDefaults::margins,
-              StyleDefaults::margins,
-              StyleDefaults::margins)
-    , paddings(StyleDefaults::paddings,
-               StyleDefaults::paddings,
-               StyleDefaults::paddings,
-               StyleDefaults::paddings)
+    , spacing(Defaults::spacing)
+    , margins(Defaults::margins, Defaults::margins, Defaults::margins, Defaults::margins)
+    , paddings(Defaults::paddings,
+               Defaults::paddings,
+               Defaults::paddings,
+               Defaults::paddings)
     , iconEdge(Qt::LeftEdge)
     , textFormat(Qt::AutoText)
     , menuArrow(":/acayipwidgets/assets/images/arrow-down.svg")
@@ -81,19 +77,24 @@ void ButtonPrivate::init()
 {
     Q_Q(Button);
 
+    spacing = scaled(q, spacing);
+    margins = scaled(q, margins);
+    paddings = scaled(q, paddings);
+    iconSize = scaled(q, iconSize);
+
     q->setMouseTracking(true);
     q->setAttribute(Qt::WA_Hover);
     q->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     q->setCursor(Qt::PointingHandCursor);
-    q->setStyles(StyleDefaults::buttonStyles);
+    q->setStyles(Defaults::buttonStyles);
 
     rippleAnimations.append(new QVariantAnimation(q));
     rippleAnimations.append(new QVariantAnimation(q));
     rippleAnimations.append(new QVariantAnimation(q));
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
         // We ripple half the time and fade half the time
-        anim->setDuration(StyleDefaults::animationDuration * 2);
-        anim->setEasingCurve(StyleDefaults::outEasingType);
+        anim->setDuration(Defaults::animationDuration * 2);
+        anim->setEasingCurve(Defaults::outEasingType);
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q, this] {
             updateHoverShadow();
             q->repaint();
@@ -107,17 +108,15 @@ void ButtonPrivate::init()
     q->setGraphicsEffect(shadowEffect);
 
     shadowAnimation.setTargetObject(shadowEffect);
-    shadowAnimation.setDuration(StyleDefaults::animationDuration);
+    shadowAnimation.setDuration(Defaults::animationDuration);
     shadowAnimation.setPropertyName("yOffset"_ba);
-    shadowAnimation.setEasingCurve(StyleDefaults::outEasingType);
+    shadowAnimation.setEasingCurve(Defaults::outEasingType);
 
-    showHideAnimation.setDuration(StyleDefaults::animationDuration);
-    showHideAnimation.setEasingCurve(StyleDefaults::outEasingType);
+    showHideAnimation.setDuration(Defaults::animationDuration);
+    showHideAnimation.setEasingCurve(Defaults::outEasingType);
 
     QObject::connect(q, &Button::clicked, q, [q] {
-        QTimer::singleShot(StyleDefaults::animationDuration,
-                           q,
-                           &Button::animatedClicked);
+        QTimer::singleShot(Defaults::animationDuration, q, &Button::animatedClicked);
     });
 }
 
@@ -176,26 +175,27 @@ void ButtonPrivate::updateTextDocumentContent()
 
     textDocument.setTextWidth(-1);
 
-    textDocumentSizeHint = textDocument.size();
+    textDocumentSizeHint = QSize(qCeil(textDocument.size().width()),
+                                 qCeil(textDocument.size().height()));
 
     textDocument.setTextWidth(itemRect(Text).width());
 }
 
-QRectF ButtonPrivate::itemRect(Item item) const
+QRect ButtonPrivate::itemRect(Item item) const
 {
     Q_Q(const Button);
 
-    QRectF rect = QRectF(q->rect()) - margins;
+    QRect rect = q->rect() - margins;
 
     if (item == Background)
         return rect;
 
     rect -= paddings;
 
-    QRectF menuRect(0, 0, 16, 16);
+    QRect menuRect(0, 0, 16, 16);
     if (item == Menu) {
         if (!q->menu())
-            return QRectF();
+            return QRect();
         menuRect.moveCenter(rect.center());
         menuRect.moveRight(rect.right());
         return menuRect;
@@ -203,34 +203,37 @@ QRectF ButtonPrivate::itemRect(Item item) const
 
     if (item == Icon) {
         if (q->icon().isNull())
-            return QRectF();
+            return QRect();
 
         switch (iconEdge) {
         case Qt::RightEdge:
-            return QRectF({rect.right() - q->iconSize().width() - menuRect.width()
-                               - spacing,
-                           rect.top() + rect.height() / 2.0
-                               - q->iconSize().height() / 2.0},
-                          q->iconSize());
+            return QRect({rect.right() - q->iconSize().width() - menuRect.width()
+                              - spacing,
+                          rect.top()
+                              + qRound(rect.height() / 2.0
+                                       - q->iconSize().height() / 2.0)},
+                         q->iconSize());
         case Qt::LeftEdge:
-            return QRectF({rect.left(),
-                           rect.top() + rect.height() / 2.0
-                               - q->iconSize().height() / 2.0},
-                          q->iconSize());
+            return QRect({rect.left(),
+                          rect.top()
+                              + qRound(rect.height() / 2.0
+                                       - q->iconSize().height() / 2.0)},
+                         q->iconSize());
         case Qt::TopEdge:
-            return QRectF({rect.left() + rect.width() / 2.0
-                               - q->iconSize().width() / 2.0,
-                           rect.top()},
-                          q->iconSize());
+            return QRect({rect.left()
+                              + qRound(rect.width() / 2.0 - q->iconSize().width() / 2.0),
+                          rect.top()},
+                         q->iconSize());
         case Qt::BottomEdge:
-            return QRectF(
+            return QRect(
                 {
-                    rect.top() + rect.width() / 2.0 - q->iconSize().width() / 2.0,
+                    rect.top()
+                        + qRound(rect.width() / 2.0 - q->iconSize().width() / 2.0),
                     rect.bottom() - q->iconSize().height(),
                 },
                 q->iconSize());
         default:
-            return QRectF();
+            return QRect();
         }
     }
 
@@ -247,16 +250,16 @@ QRectF ButtonPrivate::itemRect(Item item) const
     case Qt::BottomEdge:
         return rect.adjusted(0, 0, 0, -spacing - q->iconSize().height());
     default:
-        return QRectF();
+        return QRect();
     }
 }
 
 qreal ButtonPrivate::calculateRadius(int value) const
 {
-    const QRectF& b = itemRect(ButtonPrivate::Background);
-    return value > StyleDefaults::borderRadiusIsPercentage
+    const QRect& b = itemRect(ButtonPrivate::Background);
+    return value > Defaults::borderRadiusPercentagePoint
                ? (qMin(b.width(), b.height()) / 2.0)
-                     * (value % StyleDefaults::borderRadiusIsPercentage) / 100.0
+                     * (value % Defaults::borderRadiusPercentagePoint) / 100.0
                : value;
 }
 
@@ -265,14 +268,14 @@ void ButtonPrivate::startRippleAnimation(const QPoint& pos)
     for (QVariantAnimation* anim : std::as_const(rippleAnimations)) {
         if (anim->state() == QVariantAnimation::Running)
             continue;
-        QRectF bgRect = itemRect(ButtonPrivate::Background);
+        QRect bgRect = itemRect(ButtonPrivate::Background);
         qreal hypotenuse = std::sqrt(bgRect.width() * bgRect.width()
                                      + bgRect.height() * bgRect.height());
-        qreal scale = 2 * StyleDefaults::animationDuration / 100.0;
-        QRectF rect;
+        qreal scale = 2.0 * Defaults::animationDuration / 100.0;
+        QRect rect;
         rect.moveCenter(pos);
         anim->setStartValue(rect);
-        rect.setSize({scale * hypotenuse, scale * hypotenuse});
+        rect.setSize({qCeil(scale * hypotenuse), qCeil(scale * hypotenuse)});
         rect.moveCenter(pos);
         anim->setEndValue(rect);
         anim->start();
@@ -280,7 +283,7 @@ void ButtonPrivate::startRippleAnimation(const QPoint& pos)
     }
 }
 
-QPainterPath ButtonPrivate::backgroundPath(const QMarginsF& m) const
+QPainterPath ButtonPrivate::backgroundPath(const QMargins& m) const
 {
     qreal radius = calculateRadius(activeStyle().borderRadius);
     QPainterPath path;
@@ -409,13 +412,13 @@ void Button::setOpacity(qreal opacity)
     update();
 }
 
-qreal Button::spacing() const
+int Button::spacing() const
 {
     Q_D(const Button);
     return d->spacing;
 }
 
-void Button::setSpacing(qreal spacing)
+void Button::setSpacing(int spacing)
 {
     Q_D(Button);
     d->spacing = spacing;
@@ -423,13 +426,13 @@ void Button::setSpacing(qreal spacing)
     update();
 }
 
-const QMarginsF& Button::margins() const
+const QMargins& Button::margins() const
 {
     Q_D(const Button);
     return d->margins;
 }
 
-void Button::setMargins(const QMarginsF& margins)
+void Button::setMargins(const QMargins& margins)
 {
     Q_D(Button);
     d->margins = margins;
@@ -437,13 +440,13 @@ void Button::setMargins(const QMarginsF& margins)
     update();
 }
 
-const QMarginsF& Button::paddings() const
+const QMargins& Button::paddings() const
 {
     Q_D(const Button);
     return d->paddings;
 }
 
-void Button::setPaddings(const QMarginsF& paddings)
+void Button::setPaddings(const QMargins& paddings)
 {
     Q_D(Button);
     d->paddings = paddings;
@@ -572,22 +575,27 @@ QSize Button::minimumSizeHint() const
 {
     Q_D(const Button);
 
-    qreal width = d->margins.left() + d->margins.right() + d->paddings.left()
-                  + d->paddings.right() + d->textDocumentSizeHint.width();
-    qreal height = d->margins.top() + d->margins.bottom() + d->paddings.top()
-                   + d->paddings.bottom() + d->textDocumentSizeHint.height();
+    int width = d->margins.left() + d->margins.right() + d->paddings.left()
+                + d->paddings.right() + d->textDocumentSizeHint.width();
+    int height = d->margins.top() + d->margins.bottom() + d->paddings.top()
+                 + d->paddings.bottom() + d->textDocumentSizeHint.height();
 
     if (!icon().isNull()) {
-        if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge)
+        if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge) {
             width += d->spacing + iconSize().width();
-        else
+            if (iconSize().height() > d->textDocumentSizeHint.height())
+                height += iconSize().height() - d->textDocumentSizeHint.height();
+        } else {
             height += d->spacing + iconSize().height();
+            if (iconSize().width() > d->textDocumentSizeHint.width())
+                width += iconSize().width() - d->textDocumentSizeHint.width();
+        }
     }
 
     // FIXME: if (menu())
     // width += d->spacing + d->menuArrow.width();
 
-    return QSize(qCeil(width), qCeil(height));
+    return QSize(width, height);
 }
 
 void Button::hideAnimated()
@@ -715,6 +723,7 @@ void Button::resizeEvent(QResizeEvent* event)
     QPushButton::resizeEvent(event);
 }
 
+// FIXME: Utilize QIcon::paint and QPixmapCache
 void Button::paintEvent(QPaintEvent*)
 {
     Q_D(Button);
@@ -722,13 +731,14 @@ void Button::paintEvent(QPaintEvent*)
     const bool darkStyle = QGuiApplication::styleHints()->colorScheme()
                            == Qt::ColorScheme::Dark;
     const ButtonStyle& style = d->activeStyle();
-    const QRectF& bgRect = d->itemRect(ButtonPrivate::Background);
-    const QRectF& muRect = d->itemRect(ButtonPrivate::Menu);
-    const QRectF& txtRect = d->itemRect(ButtonPrivate::Text);
-    const QRectF& icoRect = d->itemRect(ButtonPrivate::Icon);
+    const QRect& bgRect = d->itemRect(ButtonPrivate::Background);
+    const QRect& muRect = d->itemRect(ButtonPrivate::Menu);
+    const QRect& txtRect = d->itemRect(ButtonPrivate::Text);
+    const QRect& icoRect = d->itemRect(ButtonPrivate::Icon);
     const QPen& bPen = darkStyle ? style.borderPenDark : style.borderPen;
     const QBrush& bBrush = darkStyle ? style.backgroundBrushDark
                                      : style.backgroundBrush;
+    const QColor& icoColor = darkStyle ? style.iconColorDark : style.iconColor;
     const qreal bRadius = d->calculateRadius(style.borderRadius);
     const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
     const qreal t = d->shortestActiveRippleAnimationTime();
@@ -738,7 +748,7 @@ void Button::paintEvent(QPaintEvent*)
                            : 1.0);
 
     QPainter painter(this);
-    painter.setRenderHints(StyleDefaults::renderHints);
+    painter.setRenderHints(Defaults::renderHints);
 
     // Paint the background
     painter.setPen(bPen);
@@ -772,7 +782,7 @@ void Button::paintEvent(QPaintEvent*)
         for (QVariantAnimation* anim : std::as_const(d->rippleAnimations)) {
             if (anim->state() == QVariantAnimation::Running) {
                 const qreal rT = anim->currentLoopTime() / qreal(anim->duration());
-                const QRectF& ripRect = anim->currentValue().toRectF();
+                const QRect& ripRect = anim->currentValue().toRect();
                 const QBrush& suppliedBrush = darkStyle ? d->rippleBrushDark
                                                         : d->rippleBrush;
                 const auto suppliedGrad = suppliedBrush.style()
@@ -809,10 +819,13 @@ void Button::paintEvent(QPaintEvent*)
                 }
                 painter.setPen(Qt::NoPen);
                 painter.setOpacity(
-                    o * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.65)))));
-                painter.setClipPath(d->backgroundPath(
-                    rPen.style() != Qt::NoPen ? QMarginsF{2 * a, 2 * a, 2 * a, 2 * a}
-                                              : QMarginsF{}));
+                    o * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.85)))));
+                painter.setClipPath(d->backgroundPath(rPen.style() != Qt::NoPen
+                                                          ? QMargins{qRound(2 * a),
+                                                                     qRound(2 * a),
+                                                                     qRound(2 * a),
+                                                                     qRound(2 * a)}
+                                                          : QMargins{}));
                 painter.drawEllipse(ripRect);
             }
         }
@@ -820,41 +833,26 @@ void Button::paintEvent(QPaintEvent*)
 
     // Paint the icon
     if (!icon().isNull()) {
-        QPixmap icoPixmap(d->icon.pixmap(iconSize(), devicePixelRatioF()));
-        const QColor& icoColor = darkStyle ? style.iconColorDark : style.iconColor;
-        if (icoColor.isValid()) {
-            QPainter p(&icoPixmap);
-            p.setRenderHints(painter.renderHints());
-            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            p.fillRect(icoPixmap.rect(), icoColor);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(Qt::NoBrush);
+        painter.setClipRect(icoRect.adjusted(-1, -1, 1, 1));
         painter.setOpacity(o);
-        painter.setClipRect(icoRect);
-        painter.drawPixmap(icoRect,
-                           icoPixmap,
-                           QRectF({}, iconSize() * devicePixelRatioF()));
+        if (icoColor.isValid()) {
+            painter.fillRect(icoRect, icoColor);
+            painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        }
+        d->icon.paint(&painter, icoRect);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 
     // Paint the menu arrow
     if (menu()) {
-        QPixmap muPixmap(
-            d->menuArrow.pixmap(muRect.size().toSize(), devicePixelRatioF()));
-        const QColor& muColor = darkStyle ? style.iconColorDark : style.iconColor;
-        if (muColor.isValid()) {
-            QPainter p(&muPixmap);
-            p.setRenderHints(painter.renderHints());
-            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            p.fillRect(muPixmap.rect(), muColor);
-        }
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(Qt::NoBrush);
+        painter.setClipRect(muRect.adjusted(-1, -1, 1, 1));
         painter.setOpacity(o);
-        painter.setClipRect(muRect);
-        painter.drawPixmap(muRect,
-                           muPixmap,
-                           QRectF({}, muRect.size() * devicePixelRatioF()));
+        if (icoColor.isValid()) {
+            painter.fillRect(muRect, icoColor);
+            painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        }
+        d->menuArrow.paint(&painter, muRect);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 
     // Paint the text
@@ -866,9 +864,11 @@ void Button::paintEvent(QPaintEvent*)
 
         QAbstractTextDocumentLayout::PaintContext context;
         context.palette.setColor(QPalette::Text, painter.pen().color());
-        context.clip = QRectF({}, txtRect.size());
+        context.clip = QRect({}, txtRect.size());
 
-        QRectF documentRect({}, d->textDocument.size());
+        QRect documentRect({},
+                           QSize(qCeil(d->textDocument.size().width()),
+                                 qCeil(d->textDocument.size().height())));
         documentRect.moveCenter(txtRect.center());
         painter.translate(documentRect.topLeft());
         d->textDocument.documentLayout()->draw(&painter, context);

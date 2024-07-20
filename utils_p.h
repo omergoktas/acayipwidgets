@@ -7,6 +7,10 @@
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-QColor strongerColor(QColor color, int strength = 70);
+inline namespace Utils {
+
+    void disableExistingIconEngines();
+
+} // namespace Utils
 
 ACAYIPWIDGETS_END_NAMESPACE
