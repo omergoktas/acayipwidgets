@@ -20,6 +20,8 @@ qt_add_library(AcayipWidgets
     acayipglobal.cpp
     acayiputils.h
     acayiputils.cpp
+    pixelperfectscaling.h
+    pixelperfectscaling.cpp
     boxlayout.h
     boxlayout.cpp
     button.h
@@ -65,6 +67,7 @@ target_link_libraries(AcayipWidgets
         AcayipStylePlugin
         LottieIOPlugin
         PixelPerfectIconEnginePlugin
+        $<$<PLATFORM_ID:Windows>:shcore>
 )
 
 set(ACAYIPWIDGETS_NAMESPACE "Acayip" CACHE STRING "Acayip Widgets namespace")

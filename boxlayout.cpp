@@ -41,7 +41,9 @@ void BoxLayoutPrivate::updateAnimations()
 
     for (QWidget* widget : std::as_const(widgets)) {
         if (!animations.contains(widget)) {
-            auto animation = new QPropertyAnimation(widget, "geometry"_ba, &animationGroup);
+            auto animation = new QPropertyAnimation(widget,
+                                                    "geometry"_ba,
+                                                    &animationGroup);
             animation->setDuration(Defaults::animationDuration);
             animation->setEasingCurve(Defaults::outEasingType);
             animations[widget] = animation;
@@ -85,6 +87,10 @@ void BoxLayout::animate()
 {
     activate();
     d->animationGroup.start();
+    foreach (auto layout, findChildren<QLayout*>(Qt::FindDirectChildrenOnly)) {
+        if (layout->metaObject()->indexOfMethod("animate()") != -1)
+            QMetaObject::invokeMethod(layout, "animate");
+    }
 }
 
 HBoxLayout::HBoxLayout(QWidget* parent)

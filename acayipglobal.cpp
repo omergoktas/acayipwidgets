@@ -4,7 +4,7 @@
 #include "acayipglobal.h"
 #include "utils_p.h"
 
-#include <QGuiApplication>
+#include <QCoreApplication>
 
 using namespace Qt::Literals;
 
@@ -20,11 +20,11 @@ const int Defaults::borderRadiusPercentagePoint = 1000;
 
 int Defaults::animationDuration{300};
 
-int Defaults::margins{0};
-
-int Defaults::paddings{8};
-
 int Defaults::spacing{2};
+
+QMargins Defaults::margins{0, 0, 0, 0};
+
+QMargins Defaults::paddings{8, 8, 8, 8};
 
 QEasingCurve::Type Defaults::outEasingType{QEasingCurve::OutCubic};
 
@@ -71,9 +71,6 @@ ButtonStyles Defaults::buttonStyles {
 
 static void prepare()
 {
-    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
-        Qt::HighDpiScaleFactorRoundingPolicy::Floor);
-
     // TODO: Find a way to knock down static icon engine plugins too
     // Knock down existing icon engine plugins for the sake of PixelPerfectIconEngine
     Utils::disableExistingIconEngines();

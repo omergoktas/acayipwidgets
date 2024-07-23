@@ -56,11 +56,8 @@ ButtonPrivate::ButtonPrivate()
     , elevated(false)
     , opacity(1.0)
     , spacing(Defaults::spacing)
-    , margins(Defaults::margins, Defaults::margins, Defaults::margins, Defaults::margins)
-    , paddings(Defaults::paddings,
-               Defaults::paddings,
-               Defaults::paddings,
-               Defaults::paddings)
+    , margins(Defaults::margins)
+    , paddings(Defaults::paddings)
     , iconEdge(Qt::LeftEdge)
     , textFormat(Qt::AutoText)
     , menuArrow(":/acayipwidgets/assets/images/arrow-down.svg")
@@ -76,11 +73,6 @@ ButtonPrivate::ButtonPrivate()
 void ButtonPrivate::init()
 {
     Q_Q(Button);
-
-    spacing = scaled(q, spacing);
-    margins = scaled(q, margins);
-    paddings = scaled(q, paddings);
-    iconSize = scaled(q, iconSize);
 
     q->setMouseTracking(true);
     q->setAttribute(Qt::WA_Hover);
@@ -193,6 +185,7 @@ QRect ButtonPrivate::itemRect(Item item) const
     rect -= paddings;
 
     QRect menuRect(0, 0, 16, 16);
+    menuRect = scaled(q, menuRect);
     if (item == Menu) {
         if (!q->menu())
             return QRect();
@@ -332,8 +325,9 @@ qreal ButtonPrivate::shortestActiveRippleAnimationTime() const
 
 void ButtonPrivate::updateHoverShadow()
 {
+    Q_Q(const Button);
     if (hoverShadowEnabled && shadowEffect && mouseAttached) {
-        static constexpr qreal offset = 3;
+        const qreal offset = scaled(q, 3.0);
         const qreal t = shortestActiveRippleAnimationTime();
         if (hovering) {
             if (isRippling()) {
@@ -536,7 +530,7 @@ void Button::setElevated(bool elevated)
     Q_D(Button);
     d->elevated = elevated;
     if (d->shadowEffect) {
-        d->shadowEffect->setBlurRadius(elevated ? 40 : 8);
+        d->shadowEffect->setBlurRadius(scaled(this, elevated ? 40 : 8));
         d->shadowEffect->setColor(QColor(0, 0, 0, elevated ? 160 : 80));
     }
 }

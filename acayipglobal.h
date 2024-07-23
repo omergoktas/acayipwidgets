@@ -43,9 +43,9 @@ class ACAYIPWIDGETS_EXPORT Defaults
 public:
     static qreal scaleFactor;
     static int animationDuration;
-    static int margins;
-    static int paddings;
     static int spacing;
+    static QMargins margins;
+    static QMargins paddings;
     static QEasingCurve::Type outEasingType;
     static QEasingCurve::Type inEasingType;
     static QPainter::RenderHints renderHints;

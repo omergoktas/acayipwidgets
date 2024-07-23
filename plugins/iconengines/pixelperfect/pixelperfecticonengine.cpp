@@ -128,7 +128,7 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
         int ih = i.value().size.height();
         int scale = qMin(qFloor(rw / iw), qFloor(rh / ih));
 
-        if (scale >= 1 && (rw - iw * scale < rw * 0.2 || rh - ih * scale < rh * 0.2)) {
+        if (scale >= 1 && (rw - iw * scale < rw * 0.21 || rh - ih * scale < rh * 0.21)) {
             const QString& cacheKey = cacheKeyFor(i.value().filePath,
                                                   i.value().size,
                                                   scale);

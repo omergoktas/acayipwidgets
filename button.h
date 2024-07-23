@@ -17,6 +17,16 @@ class ACAYIPWIDGETS_EXPORT Button : public QPushButton
     Q_DISABLE_COPY(Button)
     Q_DECLARE_PRIVATE(Button)
 
+    Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
+    Q_PROPERTY(int spacing READ spacing WRITE setSpacing)
+    Q_PROPERTY(QMargins margins READ margins WRITE setMargins)
+    Q_PROPERTY(QMargins paddings READ paddings WRITE setPaddings)
+    Q_PROPERTY(Qt::Edge iconEdge READ iconEdge WRITE setIconEdge)
+    Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat)
+    Q_PROPERTY(bool elevated READ isElevated WRITE setElevated)
+    Q_PROPERTY(
+        bool hoverShadowEnabled READ isHoverShadowEnabled WRITE setHoverShadowEnabled)
+
 public:
     explicit Button(QWidget* parent = nullptr);
     explicit Button(const QString& text, QWidget* parent = nullptr);
