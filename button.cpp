@@ -827,7 +827,7 @@ void Button::paintEvent(QPaintEvent*)
 
     // Paint the icon
     if (!icon().isNull()) {
-        painter.setClipRect(icoRect.adjusted(-1, -1, 1, 1));
+        painter.setClipRect(icoRect);
         painter.setOpacity(o);
         if (icoColor.isValid()) {
             painter.fillRect(icoRect, icoColor);
@@ -839,7 +839,7 @@ void Button::paintEvent(QPaintEvent*)
 
     // Paint the menu arrow
     if (menu()) {
-        painter.setClipRect(muRect.adjusted(-1, -1, 1, 1));
+        painter.setClipRect(muRect);
         painter.setOpacity(o);
         if (icoColor.isValid()) {
             painter.fillRect(muRect, icoColor);

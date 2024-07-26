@@ -34,6 +34,7 @@ QPainter::RenderHints Defaults::renderHints {
     QPainter::Antialiasing |
     QPainter::TextAntialiasing |
     QPainter::SmoothPixmapTransform |
+    QPainter::VerticalSubpixelPositioning |
     QPainter::LosslessImageRendering
 };
 

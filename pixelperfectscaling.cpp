@@ -100,13 +100,11 @@ PixelPerfectScaling::~PixelPerfectScaling()
 
 void PixelPerfectScaling::prepare()
 {
-    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
-        Qt::HighDpiScaleFactorRoundingPolicy::Floor);
+    qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
     QGuiApplication::setAttribute(Qt::AA_Use96Dpi);
 
 #if defined(Q_OS_WINDOWS)
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-    // SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 #endif
 }
 

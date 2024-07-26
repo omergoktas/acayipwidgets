@@ -45,9 +45,10 @@ void PixelPerfectIconEngine::paint(QPainter* painter,
     Q_UNUSED(state)
     const QPixmap& pm = bestMatch(rect.size(), painter->device()->devicePixelRatioF());
     QRectF pRect({0, 0}, QSizeF(pm.size()) / pm.devicePixelRatio());
-    pRect.moveCenter(rect.center());
-    painter->fillRect(rect, Qt::red);
-    painter->drawPixmap(pRect.topLeft().toPoint(), pm);
+    pRect.moveCenter(QRectF(rect).center());
+    painter->drawPixmap(int(qMax(pRect.x(), qreal(rect.x()))),
+                        int(qMax(pRect.y(), qreal(rect.y()))),
+                        pm);
 }
 
 void PixelPerfectIconEngine::init(const QString& filePath)
