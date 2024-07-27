@@ -3,6 +3,8 @@
 
 #include "button_p.h"
 
+#include <private/qhexstring_p.h>
+
 #include <QAbstractTextDocumentLayout>
 #include <QLayout>
 #include <QStyleHints>
@@ -184,64 +186,70 @@ QRect ButtonPrivate::itemRect(Item item) const
 
     rect -= paddings;
 
-    QRect menuRect(0, 0, 16, 16);
-    menuRect = scaled(q, menuRect);
+    QRect menuRect;
+    if (q->menu())
+        menuRect = QRect(QPoint(), scaled(q, QSize(11, 11)));
     if (item == Menu) {
-        if (!q->menu())
-            return QRect();
         menuRect.moveCenter(rect.center());
         menuRect.moveRight(rect.right());
         return menuRect;
     }
 
+    QRect iconRect;
+    if (!q->icon().isNull())
+        iconRect = QRect(QPoint(), iconSize);
     if (item == Icon) {
-        if (q->icon().isNull())
-            return QRect();
-
         switch (iconEdge) {
         case Qt::RightEdge:
-            return QRect({rect.right() - q->iconSize().width() - menuRect.width()
-                              - spacing,
-                          rect.top()
-                              + qRound(rect.height() / 2.0
-                                       - q->iconSize().height() / 2.0)},
-                         q->iconSize());
+            iconRect.moveTo(
+                {rect.right() - iconRect.width() - menuRect.width()
+                     - (menuRect.isNull() ? 0 : spacing),
+                 rect.top() + qRound(rect.height() / 2.0 - iconRect.height() / 2.0)});
+            break;
         case Qt::LeftEdge:
-            return QRect({rect.left(),
-                          rect.top()
-                              + qRound(rect.height() / 2.0
-                                       - q->iconSize().height() / 2.0)},
-                         q->iconSize());
+            iconRect.moveTo(
+                {rect.left(),
+                 rect.top() + qRound(rect.height() / 2.0 - iconRect.height() / 2.0)});
+            break;
         case Qt::TopEdge:
-            return QRect({rect.left()
-                              + qRound(rect.width() / 2.0 - q->iconSize().width() / 2.0),
-                          rect.top()},
-                         q->iconSize());
+            iconRect.moveTo(
+                {rect.left() + qRound(rect.width() / 2.0 - iconRect.width() / 2.0),
+                 rect.top()});
+            break;
         case Qt::BottomEdge:
-            return QRect(
-                {
-                    rect.top()
-                        + qRound(rect.width() / 2.0 - q->iconSize().width() / 2.0),
-                    rect.bottom() - q->iconSize().height(),
-                },
-                q->iconSize());
+            iconRect.moveTo({
+                rect.top() + qRound(rect.width() / 2.0 - iconRect.width() / 2.0),
+                rect.bottom() - iconRect.height(),
+            });
+            break;
         default:
-            return QRect();
+            break;
         }
+        return iconRect;
     }
-
-    if (q->icon().isNull() && !q->menu())
-        return rect;
 
     switch (iconEdge) {
     case Qt::RightEdge:
-        return rect.adjusted(0, 0, -spacing - q->iconSize().width(), 0);
+        return rect.adjusted(0,
+                             0,
+                             -iconRect.width() - (iconRect.isNull() ? 0 : spacing)
+                                 - menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             0);
     case Qt::LeftEdge:
-        return rect.adjusted(spacing + q->iconSize().width(), 0, 0, 0);
+        return rect.adjusted((iconRect.isNull() ? 0 : spacing) + iconRect.width(),
+                             0,
+                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             0);
     case Qt::TopEdge:
-        return rect.adjusted(0, spacing + q->iconSize().height(), 0, 0);
+        return rect.adjusted(0,
+                             (iconRect.isNull() ? 0 : spacing) + iconRect.height(),
+                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             0);
     case Qt::BottomEdge:
-        return rect.adjusted(0, 0, 0, -spacing - q->iconSize().height());
+        return rect.adjusted(0,
+                             0,
+                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             -(iconRect.isNull() ? 0 : spacing) - iconRect.height());
     default:
         return QRect();
     }
@@ -574,20 +582,28 @@ QSize Button::minimumSizeHint() const
     int height = d->margins.top() + d->margins.bottom() + d->paddings.top()
                  + d->paddings.bottom() + d->textDocumentSizeHint.height();
 
-    if (!icon().isNull()) {
-        if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge) {
-            width += d->spacing + iconSize().width();
-            if (iconSize().height() > d->textDocumentSizeHint.height())
-                height += iconSize().height() - d->textDocumentSizeHint.height();
-        } else {
-            height += d->spacing + iconSize().height();
-            if (iconSize().width() > d->textDocumentSizeHint.width())
-                width += iconSize().width() - d->textDocumentSizeHint.width();
-        }
+    QRect iconRect = d->itemRect(ButtonPrivate::Icon);
+    QRect menuRect = d->itemRect(ButtonPrivate::Menu);
+
+    if (!iconRect.isNull()) {
+        if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge)
+            width += d->spacing + iconRect.width();
+        else
+            height += d->spacing + iconRect.height();
     }
 
-    // FIXME: if (menu())
-    // width += d->spacing + d->menuArrow.width();
+    if (!menuRect.isNull())
+        width += d->spacing + menuRect.width();
+
+    if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge) {
+        int maxH = qMax(iconRect.height(), menuRect.height());
+        if (maxH > d->textDocumentSizeHint.height())
+            height += maxH - d->textDocumentSizeHint.height();
+    } else {
+        int maxW = qMax(iconRect.width(), menuRect.width());
+        if (maxW > d->textDocumentSizeHint.width())
+            width += maxW - d->textDocumentSizeHint.width();
+    }
 
     return QSize(width, height);
 }
@@ -726,13 +742,13 @@ void Button::paintEvent(QPaintEvent*)
                            == Qt::ColorScheme::Dark;
     const ButtonStyle& style = d->activeStyle();
     const QRect& bgRect = d->itemRect(ButtonPrivate::Background);
-    const QRect& muRect = d->itemRect(ButtonPrivate::Menu);
+    const QRect& menuRect = d->itemRect(ButtonPrivate::Menu);
     const QRect& txtRect = d->itemRect(ButtonPrivate::Text);
-    const QRect& icoRect = d->itemRect(ButtonPrivate::Icon);
+    const QRect& iconRect = d->itemRect(ButtonPrivate::Icon);
     const QPen& bPen = darkStyle ? style.borderPenDark : style.borderPen;
     const QBrush& bBrush = darkStyle ? style.backgroundBrushDark
                                      : style.backgroundBrush;
-    const QColor& icoColor = darkStyle ? style.iconColorDark : style.iconColor;
+    const QColor& iconColor = darkStyle ? style.iconColorDark : style.iconColor;
     const qreal bRadius = d->calculateRadius(style.borderRadius);
     const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
     const qreal t = d->shortestActiveRippleAnimationTime();
@@ -826,27 +842,57 @@ void Button::paintEvent(QPaintEvent*)
     }
 
     // Paint the icon
-    if (!icon().isNull()) {
-        painter.setClipRect(icoRect);
+    if (!iconRect.isNull()) {
+        painter.setClipRect(iconRect);
         painter.setOpacity(o);
-        if (icoColor.isValid()) {
-            painter.fillRect(icoRect, icoColor);
-            painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        if (iconColor.isValid()) {
+            const QString& cacheKey = u"Acayip::Button::icon"_s
+                                      % HexString<uint>(iconColor.rgba())
+                                      % HexString<uint>(iconRect.width())
+                                      % HexString<uint>(iconRect.height())
+                                      % HexString<quint16>(
+                                          qRound(devicePixelRatio() * 1000));
+            QPixmap px;
+            if (!QPixmapCache::find(cacheKey, &px)) {
+                px = d->icon.pixmap(iconRect.size(), devicePixelRatio());
+                QPainter p(&px);
+                p.setRenderHints(painter.renderHints());
+                p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+                p.fillRect(QRect(QPoint(), iconRect.size()), iconColor);
+                p.end();
+                QPixmapCache::insert(cacheKey, px);
+            }
+            painter.drawPixmap(iconRect, px);
+        } else {
+            d->icon.paint(&painter, iconRect);
         }
-        d->icon.paint(&painter, icoRect);
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 
     // Paint the menu arrow
-    if (menu()) {
-        painter.setClipRect(muRect);
+    if (!menuRect.isNull()) {
+        painter.setClipRect(menuRect);
         painter.setOpacity(o);
-        if (icoColor.isValid()) {
-            painter.fillRect(muRect, icoColor);
-            painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        if (iconColor.isValid()) {
+            const QString& cacheKey = u"Acayip::Button::menuArrow"_s
+                                      % HexString<uint>(iconColor.rgba())
+                                      % HexString<uint>(menuRect.width())
+                                      % HexString<uint>(menuRect.height())
+                                      % HexString<quint16>(
+                                          qRound(devicePixelRatio() * 1000));
+            QPixmap px;
+            if (!QPixmapCache::find(cacheKey, &px)) {
+                px = d->menuArrow.pixmap(menuRect.size(), devicePixelRatio());
+                QPainter p(&px);
+                p.setRenderHints(painter.renderHints());
+                p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+                p.fillRect(QRect(QPoint(), menuRect.size()), iconColor);
+                p.end();
+                QPixmapCache::insert(cacheKey, px);
+            }
+            painter.drawPixmap(menuRect, px);
+        } else {
+            d->menuArrow.paint(&painter, menuRect);
         }
-        d->menuArrow.paint(&painter, muRect);
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 
     // Paint the text

@@ -43,12 +43,12 @@ void PixelPerfectIconEngine::paint(QPainter* painter,
 {
     Q_UNUSED(mode)
     Q_UNUSED(state)
-    const QPixmap& pm = bestMatch(rect.size(), painter->device()->devicePixelRatioF());
-    QRectF pRect({0, 0}, QSizeF(pm.size()) / pm.devicePixelRatio());
+    const QPixmap& px = bestMatch(rect.size(), painter->device()->devicePixelRatioF());
+    QRectF pRect({0, 0}, QSizeF(px.size()) / px.devicePixelRatio());
     pRect.moveCenter(QRectF(rect).center());
     painter->drawPixmap(int(qMax(pRect.x(), qreal(rect.x()))),
                         int(qMax(pRect.y(), qreal(rect.y()))),
-                        pm);
+                        px);
 }
 
 void PixelPerfectIconEngine::init(const QString& filePath)
@@ -104,18 +104,19 @@ QString PixelPerfectIconEngine::cacheKeyFor(const QString& filePath,
                                             qreal devicePixelRatio) const
 {
     QFileInfo info(filePath);
-    return key() % info.canonicalFilePath()
+    return key()
+           % info.canonicalFilePath()
            % HexString<uint>(info.lastModified(QTimeZone::UTC).toSecsSinceEpoch())
-           % HexString<quint64>(info.size()) % HexString<uint>(size.width())
+           % HexString<quint64>(info.size())
+           % HexString<uint>(size.width())
            % HexString<uint>(size.height())
            % HexString<quint16>(qRound(devicePixelRatio * 1000));
-    ;
 }
 
 QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                                           qreal devicePixelRatio) const
 {
-    QPixmap pm;
+    QPixmap px;
     const QSizeF& requestedSize = greaterRect(size, devicePixelRatio).size();
     const qreal rw = requestedSize.width();
     const qreal rh = requestedSize.height();
@@ -133,16 +134,16 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
             const QString& cacheKey = cacheKeyFor(i.value().filePath,
                                                   i.value().size,
                                                   scale);
-            if (!QPixmapCache::find(cacheKey, &pm)) {
+            if (!QPixmapCache::find(cacheKey, &px)) {
                 QImageReader reader(i.value().filePath);
                 if (scale > 1) {
                     if (reader.supportsOption(QImageIOHandler::ScaledSize)) {
                         reader.setScaledSize(scale * i.value().size);
-                        pm = QPixmap::fromImage(reader.read());
+                        px = QPixmap::fromImage(reader.read());
                     } else {
-                        QPixmap px(scale * i.value().size);
-                        px.fill(Qt::transparent);
-                        QPainter painter(&px);
+                        QPixmap pxx(scale * i.value().size);
+                        pxx.fill(Qt::transparent);
+                        QPainter painter(&pxx);
                         painter.setRenderHints(QPainter::Antialiasing
                                                | QPainter::TextAntialiasing
                                                | QPainter::SmoothPixmapTransform
@@ -150,15 +151,15 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                         painter.scale(scale, scale);
                         painter.drawImage(QPoint{0, 0}, reader.read());
                         painter.end();
-                        pm = px;
+                        px = pxx;
                     }
                 } else {
-                    pm = QPixmap::fromImage(reader.read());
+                    px = QPixmap::fromImage(reader.read());
                 }
-                pm.setDevicePixelRatio(devicePixelRatio);
-                QPixmapCache::insert(cacheKey, pm);
+                px.setDevicePixelRatio(devicePixelRatio);
+                QPixmapCache::insert(cacheKey, px);
             }
-            return pm;
+            return px;
         }
     }
 
@@ -174,16 +175,16 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
             const QString& cacheKey = cacheKeyFor(i.value().filePath,
                                                   i.value().size,
                                                   scale);
-            if (!QPixmapCache::find(cacheKey, &pm)) {
+            if (!QPixmapCache::find(cacheKey, &px)) {
                 QImageReader reader(i.value().filePath);
                 if (scale > 1) {
                     if (reader.supportsOption(QImageIOHandler::ScaledSize)) {
                         reader.setScaledSize(greaterRect(i.value().size, scale).size());
-                        pm = QPixmap::fromImage(reader.read());
+                        px = QPixmap::fromImage(reader.read());
                     } else {
-                        QPixmap px(greaterRect(i.value().size, scale).size());
-                        px.fill(Qt::transparent);
-                        QPainter painter(&px);
+                        QPixmap pxx(greaterRect(i.value().size, scale).size());
+                        pxx.fill(Qt::transparent);
+                        QPainter painter(&pxx);
                         painter.setRenderHints(QPainter::Antialiasing
                                                | QPainter::TextAntialiasing
                                                | QPainter::SmoothPixmapTransform
@@ -191,15 +192,15 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                         painter.scale(scale, scale);
                         painter.drawImage(QPoint{0, 0}, reader.read());
                         painter.end();
-                        pm = px;
+                        px = pxx;
                     }
                 } else {
-                    pm = QPixmap::fromImage(reader.read());
+                    px = QPixmap::fromImage(reader.read());
                 }
-                pm.setDevicePixelRatio(devicePixelRatio);
-                QPixmapCache::insert(cacheKey, pm);
+                px.setDevicePixelRatio(devicePixelRatio);
+                QPixmapCache::insert(cacheKey, px);
             }
-            return pm;
+            return px;
         }
     }
 
@@ -229,20 +230,20 @@ QPixmap PixelPerfectIconEngine::scaledPixmap(const QSize& size,
     if (isNull())
         return QPixmap();
 
-    QPixmap pm(greaterRect(size, scale).size());
-    pm.setDevicePixelRatio(scale);
+    QPixmap px(greaterRect(size, scale).size());
+    px.setDevicePixelRatio(scale);
     const QString& cacheKey = cacheKeyFor(activeEntries().first().filePath, size, scale);
-    if (!QPixmapCache::find(cacheKey, &pm)) {
-        pm.fill(Qt::transparent);
-        QPainter painter(&pm);
+    if (!QPixmapCache::find(cacheKey, &px)) {
+        px.fill(Qt::transparent);
+        QPainter painter(&px);
         painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing
                                | QPainter::SmoothPixmapTransform
                                | QPainter::LosslessImageRendering);
         paint(&painter, QRect({0, 0}, size), mode, state);
         painter.end();
-        QPixmapCache::insert(cacheKey, pm);
+        QPixmapCache::insert(cacheKey, px);
     }
-    return pm;
+    return px;
 }
 
 QString PixelPerfectIconEngine::iconName()
