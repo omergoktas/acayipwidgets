@@ -8,6 +8,8 @@
 #include <QMap>
 #include <QObject>
 
+class QGuiApplication;
+
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
 class ACAYIPWIDGETS_EXPORT PixelPerfectScaling : public QObject
