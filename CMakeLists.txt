@@ -20,8 +20,6 @@ qt_add_library(AcayipWidgets
     acayipglobal.cpp
     acayiputils.h
     acayiputils.cpp
-    pixelperfectscaling.h
-    pixelperfectscaling.cpp
     boxlayout.h
     boxlayout.cpp
     button.h
@@ -33,6 +31,8 @@ target_sources(AcayipWidgets PRIVATE
     utils_p.cpp
     boxlayout_p.h
     button_p.h
+    pixelperfectscaling_p.h
+    pixelperfectscaling_p.cpp
 )
 
 add_subdirectory(plugins)

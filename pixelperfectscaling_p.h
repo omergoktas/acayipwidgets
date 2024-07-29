@@ -5,6 +5,8 @@
 
 #include <acayipglobal.h>
 
+#include <qpa/qwindowsysteminterface_p.h>
+
 #include <QMap>
 #include <QObject>
 
@@ -12,7 +14,8 @@ class QGuiApplication;
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-class ACAYIPWIDGETS_EXPORT PixelPerfectScaling : public QObject
+class PixelPerfectScaling final : public QObject, public QWindowSystemEventHandler
+
 {
     Q_OBJECT
     Q_DISABLE_COPY(PixelPerfectScaling)
@@ -26,16 +29,11 @@ class ACAYIPWIDGETS_EXPORT PixelPerfectScaling : public QObject
         QScreen* screen{nullptr};
     };
 
-    friend class WindowSystemEventFilter;
-
 public:
-    explicit PixelPerfectScaling(QObject* parent = nullptr);
+    PixelPerfectScaling();
     ~PixelPerfectScaling() override;
-
-    static void prepare();
-    static void install(QGuiApplication* guiApp);
-
-    bool eventFilter(QObject* watched, QEvent* event) override;
+    bool sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent* event) override;
+    static void init();
 
 protected slots:
     void removeWindow(QObject* windowObj);

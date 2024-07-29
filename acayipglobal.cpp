@@ -3,6 +3,7 @@
 
 #include "acayipglobal.h"
 #include "utils_p.h"
+#include "pixelperfectscaling_p.h"
 
 #include <QCoreApplication>
 
@@ -75,8 +76,9 @@ static void prepare()
     // TODO: Find a way to knock down static icon engine plugins too
     // Knock down existing icon engine plugins for the sake of PixelPerfectIconEngine
     Utils::disableExistingIconEngines();
+    PixelPerfectScaling::init();
 }
 
-Q_COREAPP_STARTUP_FUNCTION(prepare);
+Q_CONSTRUCTOR_FUNCTION(prepare);
 
 ACAYIPWIDGETS_END_NAMESPACE
