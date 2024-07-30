@@ -127,8 +127,17 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     }
 
     foreach (QWidget* widget, windowWidget->findChildren<QWidget*>()) {
-        if (!widget->parentWidget() || !widget->parentWidget()->layout())
-            widget->setGeometry(scaled(widget, widget->geometry(), factor));
+        if (!widget->parentWidget() || !widget->parentWidget()->layout()) {
+            const QRect& geometry = widget->geometry();
+            if (!windowEntry->initialized) {
+                widget->setProperty("pps_initialGeometry", geometry);
+                widget->setGeometry(scaled(screen, geometry, factor));
+            } else {
+                const QRect& initialGeometry
+                    = widget->property("pps_initialGeometry").toRect();
+                widget->setGeometry(scaled(widget, geometry, initialGeometry, factor));
+            }
+        }
 
         if (!widget->font().isCopyOf(font)
             && !(widget->parentWidget()

@@ -42,12 +42,13 @@ int Utils::scaled(const QScreen* screen, int value, qreal multiply, bool roundUp
 int Utils::scaled(
     const QScreen* screen, int value, int initialValue, qreal multiply, bool roundUp)
 {
-    int sps = scaled(screen, value, multiply, roundUp);
-    int ips = scaled(screen, initialValue, 1.0, roundUp);
-    if (qAbs(sps - ips) <= 1)
-        return ips;
+    qreal initializer = multiply / scaled(screen, 1.0);
+    qreal sps(scaled(screen, qreal(value), initializer));
+    int ips = initialValue;
+    if (qAbs(sps - ips) <= 1.0)
+        return scaled(screen, ips, 1.0, roundUp);
     else
-        return sps;
+        return scaled(screen, value, multiply, roundUp);
 }
 
 QPointF Utils::scaled(const QScreen* screen, const QPointF& point, qreal multiply)
@@ -66,12 +67,13 @@ QPoint Utils::scaled(const QScreen* screen,
                      const QPoint& initialPoint,
                      qreal multiply)
 {
-    QPoint sps(scaled(screen, point.x(), multiply), scaled(screen, point.y(), multiply));
-    QPoint ips(scaled(screen, initialPoint.x()), scaled(screen, initialPoint.y()));
-    if (qAbs(sps.x() - ips.x()) <= 1 && qAbs(sps.y() - ips.y()) <= 1)
-        return ips;
+    qreal initializer = multiply / scaled(screen, 1.0);
+    QPointF sps(scaled(screen, QPointF(point), initializer));
+    const QPoint& ips = initialPoint;
+    if (qAbs(sps.x() - ips.x()) <= 1.0 && qAbs(sps.y() - ips.y()) <= 1.0)
+        return scaled(screen, ips);
     else
-        return sps;
+        return scaled(screen, point, multiply);
 }
 
 QSizeF Utils::scaled(const QScreen* screen, const QSizeF& size, qreal multiply)
@@ -90,13 +92,15 @@ QSize Utils::scaled(const QScreen* screen,
                     const QSize& initialSize,
                     qreal multiply)
 {
-    QSize sps(scaled(screen, size.width(), multiply),
-              scaled(screen, size.height(), multiply));
-    QSize ips(scaled(screen, initialSize.width()), scaled(screen, initialSize.height()));
-    if (qAbs(sps.width() - ips.width()) <= 1 && qAbs(sps.height() - ips.height()) <= 1)
-        return ips;
-    else
-        return sps;
+    qreal initializer = multiply / scaled(screen, 1.0);
+    QSizeF sps(scaled(screen, QSizeF(size), initializer));
+    const QSize& ips = initialSize;
+    if (qAbs(sps.width() - ips.width()) <= 1.0
+        && qAbs(sps.height() - ips.height()) <= 1.0) {
+        return scaled(screen, ips);
+    } else {
+        return scaled(screen, size, multiply);
+    }
 }
 
 QRectF Utils::scaled(const QScreen* screen, const QRectF& rect, qreal multiply)
@@ -116,15 +120,16 @@ QRect Utils::scaled(const QScreen* screen,
                     const QRect& initialRect,
                     qreal multiply)
 {
-    QRect sps(scaled(screen, rect.topLeft(), multiply),
-              scaled(screen, rect.size(), multiply));
-    QRect ips(scaled(screen, initialRect.topLeft()), scaled(screen, initialRect.size()));
-    if (qAbs(sps.x() - ips.x()) <= 1 && qAbs(sps.y() - ips.y()) <= 1
-        && qAbs(sps.width() - ips.width()) <= 1
-        && qAbs(sps.height() - ips.height()) <= 1) {
-        return ips;
+    qreal initializer = multiply / scaled(screen, 1.0);
+    QRectF sps(scaled(screen, QRectF(rect), initializer));
+    const QRect& ips = initialRect;
+    if (qAbs(sps.x() - ips.x()) <= 1.0
+        && qAbs(sps.y() - ips.y()) <= 1.0
+        && qAbs(sps.width() - ips.width()) <= 1.0
+        && qAbs(sps.height() - ips.height()) <= 1.0) {
+        return scaled(screen, ips);
     } else {
-        return sps;
+        return scaled(screen, rect, multiply);
     }
 }
 
@@ -146,20 +151,16 @@ QMargins Utils::scaled(const QScreen* screen,
                        const QMargins& initialPaddings,
                        qreal multiply)
 {
-    QMargins sps(scaled(screen, margins.left(), multiply),
-                 scaled(screen, margins.top(), multiply),
-                 scaled(screen, margins.right(), multiply),
-                 scaled(screen, margins.bottom(), multiply));
-    QMargins ips(scaled(screen, initialPaddings.left()),
-                 scaled(screen, initialPaddings.top()),
-                 scaled(screen, initialPaddings.right()),
-                 scaled(screen, initialPaddings.bottom()));
-    if (qAbs(sps.left() - ips.left()) <= 1 && qAbs(sps.top() - ips.top()) <= 1
-        && qAbs(sps.right() - ips.right()) <= 1
-        && qAbs(sps.bottom() - ips.bottom()) <= 1) {
-        return ips;
+    qreal initializer = multiply / scaled(screen, 1.0);
+    QMarginsF sps(scaled(screen, QMarginsF(margins), initializer));
+    const QMargins& ips = initialPaddings;
+    if (qAbs(sps.left() - ips.left()) <= 1.0
+        && qAbs(sps.top() - ips.top()) <= 1.0
+        && qAbs(sps.right() - ips.right()) <= 1.0
+        && qAbs(sps.bottom() - ips.bottom()) <= 1.0) {
+        return scaled(screen, ips);
     } else {
-        return sps;
+        return scaled(screen, margins, multiply);
     }
 }
 
@@ -182,12 +183,13 @@ QFont Utils::scaled(const QScreen* screen,
     if (copy.pixelSize() == -1) {
         copy.setPointSizeF(scaled(screen, copy.pointSizeF(), multiply));
     } else {
-        int sps = scaled(screen, copy.pixelSize(), multiply);
-        int ips = scaled(screen, initialFont.pixelSize());
-        if (qAbs(sps - ips) <= 1)
-            copy.setPixelSize(qCeil(ips));
+        qreal initializer = multiply / scaled(screen, 1.0);
+        qreal sps = scaled(screen, qreal(font.pixelSize()), initializer);
+        int ips = initialFont.pixelSize();
+        if (qAbs(sps - ips) <= 1.0)
+            copy.setPixelSize(scaled(screen, ips));
         else
-            copy.setPixelSize(qCeil(sps));
+            copy.setPixelSize(scaled(screen, copy.pixelSize(), multiply));
     }
     return copy;
 }
