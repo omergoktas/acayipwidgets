@@ -11,7 +11,7 @@ qt_add_library(AcayipStylePlugin
 
 target_link_libraries(AcayipStylePlugin
     PRIVATE
-        Qt::Widgets
+        Qt::WidgetsPrivate
 )
 
 target_compile_definitions(AcayipStylePlugin PRIVATE QT_STATICPLUGIN)

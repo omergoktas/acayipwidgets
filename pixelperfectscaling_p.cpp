@@ -69,10 +69,11 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     if (!windowWidget)
         return;
 
+    QSize scaledSize;
     qreal factor = 1.0 / windowEntry->oldDpr;
     const QScreen* screen = windowEntry->screen;
 
-    QSize scaledSize;
+#if defined(ACAYIP_PLATFORM_DESKTOP)
     const QSize& winMinimumSize = windowWidget->minimumSize();
     if (!winMinimumSize.isNull()) {
         if (!windowEntry->initialized) {
@@ -114,6 +115,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     windowEntry->oldSize = scaledSize;
 #if defined(Q_OS_WINDOWS)
     windowEntry->window->setFlag(Qt::FramelessWindowHint, false);
+#endif
 #endif
 
     const QFont font = windowWidget->font();

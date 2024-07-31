@@ -30,7 +30,7 @@ qreal Utils::scaled(const QScreen* screen, qreal value, qreal multiply)
     QDpi dpi1(QHighDpiScaling::logicalDpi(screen));
     QDpi dpi2(screen->handle()->logicalBaseDpi());
     qreal platformFactor = (dpi1.first / dpi2.first + dpi1.second / dpi2.second) / 2.0;
-    return value * platformFactor * Defaults::scaleFactor * multiply;
+    return value * platformFactor * Defaults::extraScaleFactor * multiply;
 }
 
 int Utils::scaled(const QScreen* screen, int value, qreal multiply, bool roundUp)

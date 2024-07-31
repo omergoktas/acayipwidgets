@@ -25,7 +25,7 @@ public:
 QImageIOPlugin::Capabilities LottieIOPlugin::capabilities(QIODevice* device,
                                                           const QByteArray& format) const
 {
-    if (format == "lottie"_ba || format == "json"_ba || (device && device->isReadable()))
+    if ((format == "lottie"_ba || format == "json"_ba) && device && device->isReadable())
         return Capabilities(CanRead);
     return {};
 }

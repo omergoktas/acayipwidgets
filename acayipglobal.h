@@ -41,11 +41,11 @@ class ACAYIPWIDGETS_EXPORT Defaults
     static const int borderRadiusPercentagePoint;
 
 public:
-    static qreal scaleFactor;
     static int animationDuration;
     static int spacing;
-    static QMargins margins;
+    static qreal extraScaleFactor;
     static QMargins paddings;
+    static QMargins margins;
     static QEasingCurve::Type outEasingType;
     static QEasingCurve::Type inEasingType;
     static QPainter::RenderHints renderHints;

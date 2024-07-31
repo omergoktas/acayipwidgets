@@ -27,7 +27,7 @@ void Utils::disableExistingIconEngines()
 #if defined(Q_OS_WIN)
                              QStringList(u"*.dll"_s),
 #elif defined(Q_OS_ANDROID)
-                             QStringList(u"libplugins_%1_*.so"_s.arg(suffix)),
+                             QStringList(u"libplugins_iconengines_*.so"_s),
 #endif
                              QDir::Files,
                              QDirIterator::Subdirectories);
@@ -39,7 +39,7 @@ void Utils::disableExistingIconEngines()
             if (fileName.endsWith(".avx2"_L1) || fileName.endsWith(".avx512"_L1))
                 continue;
 #endif
-            if (!fileInfo.filePath().contains("/iconengines/"_L1))
+            if (!fileInfo.filePath().contains("iconengines"_L1))
                 continue;
 
             QLibrary lib(fileInfo.canonicalFilePath());

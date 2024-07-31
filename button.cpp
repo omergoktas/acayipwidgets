@@ -57,9 +57,9 @@ ButtonPrivate::ButtonPrivate()
     , hoverShadowEnabled(true)
     , elevated(false)
     , opacity(1.0)
-    , spacing(Defaults::spacing)
+    , spacing(Defaults::spacing / 3.0)
     , margins(Defaults::margins)
-    , paddings(Defaults::paddings)
+    , paddings(Defaults::paddings * 1.5)
     , iconEdge(Qt::LeftEdge)
     , textFormat(Qt::AutoText)
     , menuArrow(":/acayipwidgets/assets/images/arrow-down.svg")
@@ -203,7 +203,7 @@ QRect ButtonPrivate::itemRect(Item item) const
         case Qt::RightEdge:
             iconRect.moveTo(
                 {rect.right() - iconRect.width() - menuRect.width()
-                     - (menuRect.isNull() ? 0 : spacing),
+                     - (menuRect.isEmpty() ? 0 : spacing),
                  rect.top() + qRound(rect.height() / 2.0 - iconRect.height() / 2.0)});
             break;
         case Qt::LeftEdge:
@@ -232,24 +232,24 @@ QRect ButtonPrivate::itemRect(Item item) const
     case Qt::RightEdge:
         return rect.adjusted(0,
                              0,
-                             -iconRect.width() - (iconRect.isNull() ? 0 : spacing)
-                                 - menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             -iconRect.width() - (iconRect.isEmpty() ? 0 : spacing)
+                                 - menuRect.width() - (menuRect.isEmpty() ? 0 : spacing),
                              0);
     case Qt::LeftEdge:
-        return rect.adjusted((iconRect.isNull() ? 0 : spacing) + iconRect.width(),
+        return rect.adjusted((iconRect.isEmpty() ? 0 : spacing) + iconRect.width(),
                              0,
-                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             -menuRect.width() - (menuRect.isEmpty() ? 0 : spacing),
                              0);
     case Qt::TopEdge:
         return rect.adjusted(0,
-                             (iconRect.isNull() ? 0 : spacing) + iconRect.height(),
-                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
+                             (iconRect.isEmpty() ? 0 : spacing) + iconRect.height(),
+                             -menuRect.width() - (menuRect.isEmpty() ? 0 : spacing),
                              0);
     case Qt::BottomEdge:
         return rect.adjusted(0,
                              0,
-                             -menuRect.width() - (menuRect.isNull() ? 0 : spacing),
-                             -(iconRect.isNull() ? 0 : spacing) - iconRect.height());
+                             -menuRect.width() - (menuRect.isEmpty() ? 0 : spacing),
+                             -(iconRect.isEmpty() ? 0 : spacing) - iconRect.height());
     default:
         return QRect();
     }
@@ -585,14 +585,14 @@ QSize Button::minimumSizeHint() const
     QRect iconRect = d->itemRect(ButtonPrivate::Icon);
     QRect menuRect = d->itemRect(ButtonPrivate::Menu);
 
-    if (!iconRect.isNull()) {
+    if (!iconRect.isEmpty()) {
         if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge)
             width += d->spacing + iconRect.width();
         else
             height += d->spacing + iconRect.height();
     }
 
-    if (!menuRect.isNull())
+    if (!menuRect.isEmpty())
         width += d->spacing + menuRect.width();
 
     if (d->iconEdge == Qt::RightEdge || d->iconEdge == Qt::LeftEdge) {
@@ -733,7 +733,6 @@ void Button::resizeEvent(QResizeEvent* event)
     QPushButton::resizeEvent(event);
 }
 
-// FIXME: Utilize QIcon::paint and QPixmapCache
 void Button::paintEvent(QPaintEvent*)
 {
     Q_D(Button);
@@ -842,7 +841,7 @@ void Button::paintEvent(QPaintEvent*)
     }
 
     // Paint the icon
-    if (!iconRect.isNull()) {
+    if (!iconRect.isEmpty()) {
         painter.setClipRect(iconRect);
         painter.setOpacity(o);
         if (iconColor.isValid()) {
@@ -869,7 +868,7 @@ void Button::paintEvent(QPaintEvent*)
     }
 
     // Paint the menu arrow
-    if (!menuRect.isNull()) {
+    if (!menuRect.isEmpty()) {
         painter.setClipRect(menuRect);
         painter.setOpacity(o);
         if (iconColor.isValid()) {
