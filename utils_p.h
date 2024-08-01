@@ -10,6 +10,7 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 inline namespace Utils {
 
     void disableExistingIconEngines();
+    QSize explicitWidgetMinMaxSize(const QWidget* widget, bool minimum);
 
 } // namespace Utils
 

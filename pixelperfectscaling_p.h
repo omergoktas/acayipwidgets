@@ -38,6 +38,7 @@ public:
 protected slots:
     void removeWindow(QObject* windowObj);
     void resizeWindow(WindowEntry* windowEntry);
+    QWidget* windowWidget(const QWindow* window) const;
 
 private:
     QList<WindowEntry*> m_windows;

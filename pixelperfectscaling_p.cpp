@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "pixelperfectscaling_p.h"
+#include "utils_p.h"
 
 #include <QApplication>
 #include <QLayout>
@@ -57,78 +58,21 @@ void PixelPerfectScaling::removeWindow(QObject* windowObj)
 
 void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 {
-    QWidget* windowWidget = nullptr;
-    foreach (QWidget* widget, QApplication::topLevelWidgets()) {
-        if (widget->windowHandle() == windowEntry->window) {
-            windowWidget = widget;
-            break;
-        }
-    }
-
-    Q_ASSERT_X(windowWidget, "PixelPerfectScaling", "couldn't find the window widget");
-    if (!windowWidget)
-        return;
-
+    QWidget* winWidget = windowWidget(windowEntry->window);
     QSize scaledSize;
     qreal factor = 1.0 / windowEntry->oldDpr;
     const QScreen* screen = windowEntry->screen;
 
-#if defined(ACAYIP_PLATFORM_DESKTOP)
-    const QSize& winMinimumSize = windowWidget->minimumSize();
-    if (!winMinimumSize.isNull()) {
-        if (!windowEntry->initialized) {
-            windowWidget->setProperty("pps_initialMinimumSize", winMinimumSize);
-            scaledSize = scaled(screen, winMinimumSize, factor);
-        } else {
-            const QSize& initialMinimumSize
-                = windowWidget->property("pps_initialMinimumSize").toSize();
-            scaledSize = scaled(screen, winMinimumSize, initialMinimumSize, factor);
-        }
-        windowWidget->setMinimumSize(scaledSize);
-    }
-
-    const QSize& winMaximumSize = windowWidget->maximumSize();
-    if (winMaximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
-        if (!windowEntry->initialized) {
-            windowWidget->setProperty("pps_initialMaximumSize", winMaximumSize);
-            scaledSize = scaled(screen, winMaximumSize, factor);
-        } else {
-            const QSize& initialMaximumSize
-                = windowWidget->property("pps_initialMaximumSize").toSize();
-            scaledSize = scaled(screen, winMaximumSize, initialMaximumSize, factor);
-        }
-        windowWidget->setMaximumSize(scaledSize);
-    }
-
-    const QSize& winSize = windowEntry->oldSize;
-    const QPoint& winPos = windowWidget->pos();
+    const QFont font = winWidget->font();
     if (!windowEntry->initialized) {
-        windowWidget->setProperty("pps_initialSize", winSize);
-        scaledSize = scaled(screen, winSize, factor);
-        const QSize& d = (scaledSize - winSize) / 2.0;
-        windowWidget->move(winPos - QPoint(d.width(), d.height()));
+        winWidget->setProperty("pps_initialFont", font);
+        winWidget->setFont(scaled(screen, font, factor));
     } else {
-        const QSize& initialSize = windowWidget->property("pps_initialSize").toSize();
-        scaledSize = scaled(screen, winSize, initialSize, factor);
-    }
-    windowWidget->resize(scaledSize);
-    windowEntry->oldSize = scaledSize;
-#if defined(Q_OS_WINDOWS)
-    windowEntry->window->setFlag(Qt::FramelessWindowHint, false);
-#endif
-#endif
-
-    const QFont font = windowWidget->font();
-    if (!windowEntry->initialized) {
-        windowWidget->setProperty("pps_initialFont", font);
-        windowWidget->setFont(scaled(screen, font, factor));
-    } else {
-        const QFont& initialFont
-            = windowWidget->property("pps_initialFont").value<QFont>();
-        windowWidget->setFont(scaled(screen, font, initialFont, factor));
+        const QFont& initialFont = winWidget->property("pps_initialFont").value<QFont>();
+        winWidget->setFont(scaled(screen, font, initialFont, factor));
     }
 
-    foreach (QWidget* widget, windowWidget->findChildren<QWidget*>()) {
+    foreach (QWidget* widget, winWidget->findChildren<QWidget*>()) {
         if (!widget->parentWidget() || !widget->parentWidget()->layout()) {
             const QRect& geometry = widget->geometry();
             if (!windowEntry->initialized) {
@@ -154,8 +98,8 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
             }
         }
 
-        const QSize& minimumSize = widget->minimumSize();
-        if (!minimumSize.isNull()) {
+        const QSize& minimumSize = Utils::explicitWidgetMinMaxSize(widget, true);
+        if (!minimumSize.isEmpty()) {
             if (!windowEntry->initialized) {
                 widget->setProperty("pps_initialMinimumSize", minimumSize);
                 scaledSize = scaled(screen, minimumSize, factor);
@@ -167,8 +111,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
             widget->setMinimumSize(scaledSize);
         }
 
-        const QSize& maximumSize = widget->maximumSize();
-        if (maximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+        const QSize& maximumSize = Utils::explicitWidgetMinMaxSize(widget, false);
+        if (!maximumSize.isEmpty()
+            && maximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
             if (!windowEntry->initialized) {
                 widget->setProperty("pps_initialMaximumSize", maximumSize);
                 scaledSize = scaled(screen, maximumSize, factor);
@@ -269,7 +214,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         }
     }
 
-    foreach (QLayout* layout, windowWidget->findChildren<QLayout*>()) {
+    foreach (QLayout* layout, winWidget->findChildren<QLayout*>()) {
         if (!layout->contentsMargins().isNull()) {
             const QMargins& margins = layout->contentsMargins();
             if (!windowEntry->initialized) {
@@ -312,7 +257,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         }
     }
 
-    foreach (QMovie* movie, windowWidget->findChildren<QMovie*>()) {
+    foreach (QMovie* movie, winWidget->findChildren<QMovie*>()) {
         const QSize& size = movie->scaledSize();
         if (!windowEntry->initialized) {
             movie->setProperty("pps_initialScaledSize", size);
@@ -325,27 +270,83 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         movie->setScaledSize(scaledSize);
     }
 
+#if defined(ACAYIP_PLATFORM_DESKTOP)
+    const QSize& winMinimumSize = Utils::explicitWidgetMinMaxSize(winWidget, true);
+    if (!winMinimumSize.isEmpty()) {
+        if (!windowEntry->initialized) {
+            winWidget->setProperty("pps_initialMinimumSize", winMinimumSize);
+            scaledSize = scaled(screen, winMinimumSize, factor);
+        } else {
+            const QSize& initialMinimumSize
+                = winWidget->property("pps_initialMinimumSize").toSize();
+            scaledSize = scaled(screen, winMinimumSize, initialMinimumSize, factor);
+        }
+        winWidget->setMinimumSize(scaledSize);
+    }
+
+    const QSize& winMaximumSize = Utils::explicitWidgetMinMaxSize(winWidget, false);
+    if (!winMaximumSize.isEmpty()
+        && winMaximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+        if (!windowEntry->initialized) {
+            winWidget->setProperty("pps_initialMaximumSize", winMaximumSize);
+            scaledSize = scaled(screen, winMaximumSize, factor);
+        } else {
+            const QSize& initialMaximumSize
+                = winWidget->property("pps_initialMaximumSize").toSize();
+            scaledSize = scaled(screen, winMaximumSize, initialMaximumSize, factor);
+        }
+        winWidget->setMaximumSize(scaledSize);
+    }
+
+    const QSize& winSize = windowEntry->oldSize;
+    const QPoint& winPos = winWidget->pos();
+    if (!windowEntry->initialized) {
+        winWidget->setProperty("pps_initialSize", winSize);
+        scaledSize = scaled(screen, winSize, factor);
+        const QSize& d = (scaledSize - winSize) / 2.0;
+        winWidget->move(winPos - QPoint(d.width(), d.height()));
+    } else {
+        const QSize& initialSize = winWidget->property("pps_initialSize").toSize();
+        scaledSize = scaled(screen, winSize, initialSize, factor);
+    }
+    winWidget->resize(scaledSize);
+    QTimer::singleShot(1000, winWidget, [winWidget, scaledSize] {
+        winWidget->resize(scaledSize);
+    });
+#if defined(Q_OS_WINDOWS)
+    windowEntry->window->setFlag(Qt::FramelessWindowHint, false);
+#endif
+#endif
     windowEntry->oldDpr = scaled(screen, 1.0);
     windowEntry->initialized = true;
+}
+
+QWidget* PixelPerfectScaling::windowWidget(const QWindow* window) const
+{
+    foreach (QWidget* widget, QApplication::topLevelWidgets()) {
+        if (widget->windowHandle() == window)
+            return widget;
+    }
+    Q_ASSERT_X(false, "PixelPerfectScaling", "couldn't find the window widget");
+    return nullptr;
 }
 
 bool PixelPerfectScaling::sendEvent(
     QWindowSystemInterfacePrivate::WindowSystemEvent* event)
 {
-    bool result = QWindowSystemEventHandler::sendEvent(event);
     if (event->type == QWindowSystemInterfacePrivate::Expose) {
         auto e = static_cast<QWindowSystemInterfacePrivate::WindowScreenChangedEvent*>(
             event);
         for (const WindowEntry* we : std::as_const(m_windows)) {
             if (we->window == e->window)
-                return result;
+                return true;
         }
         connect(e->window,
                 &QWindow::destroyed,
                 this,
                 &PixelPerfectScaling::removeWindow);
         auto we = new WindowEntry{.oldDpr = 1.0,
-                                  .oldSize = e->window->size(),
+                                  .oldSize = windowWidget(e->window)->size(),
                                   .window = e->window,
                                   .screen = e->window->screen()};
         m_windows.append(we);
@@ -358,7 +359,7 @@ bool PixelPerfectScaling::sendEvent(
             event);
         for (WindowEntry* we : std::as_const(m_windows)) {
             if (we->window == e->window) {
-                we->oldSize = e->window->size();
+                we->oldSize = windowWidget(e->window)->size();
                 we->screen = e->screen;
 #if defined(Q_OS_WINDOWS)
                 we->window->setFlag(Qt::FramelessWindowHint, true);
@@ -376,7 +377,7 @@ bool PixelPerfectScaling::sendEvent(
             QWindowSystemInterfacePrivate::WindowDevicePixelRatioChangedEvent*>(event);
         for (WindowEntry* we : std::as_const(m_windows)) {
             if (we->window == e->window) {
-                we->oldSize = e->window->size();
+                we->oldSize = windowWidget(e->window)->size();
                 QMetaObject::invokeMethod(this,
                                           &PixelPerfectScaling::resizeWindow,
                                           Qt::QueuedConnection,
@@ -390,7 +391,7 @@ bool PixelPerfectScaling::sendEvent(
                 event);
         for (WindowEntry* we : std::as_const(m_windows)) {
             if (we->screen == e->screen) {
-                we->oldSize = we->window->size();
+                we->oldSize = windowWidget(we->window)->size();
                 QMetaObject::invokeMethod(this,
                                           &PixelPerfectScaling::resizeWindow,
                                           Qt::QueuedConnection,
@@ -398,7 +399,7 @@ bool PixelPerfectScaling::sendEvent(
             }
         }
     }
-    return result;
+    return QWindowSystemEventHandler::sendEvent(event);
 }
 
 ACAYIPWIDGETS_END_NAMESPACE

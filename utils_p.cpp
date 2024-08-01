@@ -4,6 +4,7 @@
 #include "utils_p.h"
 
 #include <private/qlibrary_p.h>
+#include <private/qwidget_p.h>
 
 #include <QDirIterator>
 #include <QGuiApplication>
@@ -19,6 +20,35 @@ public:
 };
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
+
+class WidgetHackPrivate : public QWidgetPrivate
+{};
+class WidgetHack final : public QWidget
+{
+    Q_DECLARE_PRIVATE(WidgetHack)
+public:
+    static QSize explicitMinMaxSize(const QWidget* widget, bool minimum)
+    {
+        QSize size;
+        if (widget) {
+            if (auto extra
+                = reinterpret_cast<const WidgetHack*>(widget)->d_func()->extra.get()) {
+                if (minimum) {
+                    if (extra->explicitMinSize & Qt::Horizontal)
+                        size.setWidth(extra->minw);
+                    if (extra->explicitMinSize & Qt::Vertical)
+                        size.setHeight(extra->minh);
+                } else {
+                    if (extra->explicitMaxSize & Qt::Horizontal)
+                        size.setWidth(extra->maxw);
+                    if (extra->explicitMaxSize & Qt::Vertical)
+                        size.setHeight(extra->maxh);
+                }
+            }
+        }
+        return size;
+    }
+};
 
 void Utils::disableExistingIconEngines()
 {
@@ -47,6 +77,11 @@ void Utils::disableExistingIconEngines()
             reinterpret_cast<QLibraryStore*>(&lib)->invalidate();
         }
     }
+}
+
+QSize Utils::explicitWidgetMinMaxSize(const QWidget* widget, bool minimum)
+{
+    return WidgetHack::explicitMinMaxSize(widget, minimum);
 }
 
 ACAYIPWIDGETS_END_NAMESPACE
