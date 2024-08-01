@@ -16,10 +16,12 @@ BoxLayoutPrivate::BoxLayoutPrivate(BoxLayout* q_ptr)
 
 void BoxLayoutPrivate::init()
 {
-    QObject::connect(&animationGroup,
-                     &QPropertyAnimation::finished,
-                     q,
-                     &BoxLayout::activate);
+    QObject::connect(&animationGroup, &QPropertyAnimation::finished, q, [this] {
+        q->setEnabled(true);
+        q->activate();
+    });
+    q->setSpacing(Defaults::spacing);
+    q->setContentsMargins(Defaults::paddings);
 }
 
 void BoxLayoutPrivate::updateAnimations()
@@ -90,6 +92,15 @@ void BoxLayout::animate()
     foreach (auto layout, findChildren<QLayout*>(Qt::FindDirectChildrenOnly)) {
         if (layout->metaObject()->indexOfMethod("animate()") != -1)
             QMetaObject::invokeMethod(layout, "animate");
+    }
+}
+
+void BoxLayout::prepareAnimate()
+{
+    setEnabled(false);
+    foreach (auto layout, findChildren<QLayout*>(Qt::FindDirectChildrenOnly)) {
+        if (layout->metaObject()->indexOfMethod("animate()") != -1)
+            layout->setEnabled(false);
     }
 }
 

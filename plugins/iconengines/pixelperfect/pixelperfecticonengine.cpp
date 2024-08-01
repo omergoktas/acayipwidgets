@@ -43,7 +43,7 @@ void PixelPerfectIconEngine::paint(QPainter* painter,
 {
     Q_UNUSED(mode)
     Q_UNUSED(state)
-    const QPixmap& px = bestMatch(rect.size(), painter->device()->devicePixelRatioF());
+    const QPixmap& px = bestMatch(rect.size(), painter->device()->devicePixelRatio());
     QRectF pRect({0, 0}, QSizeF(px.size()) / px.devicePixelRatio());
     pRect.moveCenter(QRectF(rect).center());
     painter->drawPixmap(int(qMax(pRect.x(), qreal(rect.x()))),

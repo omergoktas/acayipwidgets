@@ -195,7 +195,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
             } else {
                 int initialLineWidth = widget->property("pps_initialLineWidth").toInt();
                 widget->setProperty("lineWidth",
-                                    scaled(screen, value, initialLineWidth, factor));
+                                    scaled(screen, value, initialLineWidth, factor, false));
             }
         }
 
@@ -209,7 +209,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
                 int initialMidLineWidth
                     = widget->property("pps_initialMidLineWidth").toInt();
                 widget->setProperty("midLineWidth",
-                                    scaled(screen, value, initialMidLineWidth, factor));
+                                    scaled(screen, value, initialMidLineWidth, factor, false));
             }
         }
     }

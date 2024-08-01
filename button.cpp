@@ -625,6 +625,12 @@ void Button::hideAnimated()
             &QVariantAnimation::valueChanged,
             this,
             qOverload<>(&QWidget::repaint));
+    if (parentWidget() && parentWidget()->layout()) {
+        connect(&d->showHideAnimation,
+                SIGNAL(finished()),
+                parentWidget()->layout(),
+                SLOT(prepareAnimate()));
+    }
     connect(&d->showHideAnimation, &QVariantAnimation::finished, this, &Button::hide);
     d->showHideAnimation.start();
     if (parentWidget() && parentWidget()->layout()) {
@@ -653,6 +659,8 @@ void Button::showAnimated()
     d->showHideAnimation.setStartValue(0.0);
     d->showHideAnimation.setEndValue(1.0);
     d->showHideAnimation.start();
+    if (parentWidget() && parentWidget()->layout())
+        QMetaObject::invokeMethod(parentWidget()->layout(), "prepareAnimate");
     show();
     if (parentWidget() && parentWidget()->layout())
         QMetaObject::invokeMethod(parentWidget()->layout(), "animate");

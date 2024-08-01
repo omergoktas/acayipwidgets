@@ -24,6 +24,7 @@ public:
 
 public slots:
     void animate();
+    void prepareAnimate();
 
 private:
     BoxLayoutPrivate* d;
