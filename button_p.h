@@ -37,7 +37,7 @@ public:
     void mergeStyleWithRest(Button::Style& target, const Button::Style& source) const;
     void updateTextDocumentContent();
     QRect itemRect(Item item) const;
-    qreal calculateRadius(int value) const;
+    qreal calculateRadius(qreal value) const;
     void startRippleAnimation(const QPoint& pos);
     QPainterPath backgroundPath(const QMarginsF& margins = QMargins()) const;
     const Button::Style& activeStyle() const;

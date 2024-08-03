@@ -83,7 +83,7 @@ void ButtonPrivate::init()
     q->setCursor(Qt::PointingHandCursor);
     q->setStyles({
         .rest = {
-            .borderRadius = Defaults::borderRadiusPercentagePoint + 100,
+            .borderRadius = Defaults::borderRadiusPercentagePoint + 100.0,
             .textColor = QColor(0xffffff),
             .textColorDark = QColor(0xffffff),
             .iconColor = QColor(0xffffff),
@@ -160,8 +160,8 @@ void ButtonPrivate::init()
 void ButtonPrivate::mergeStyleWithRest(Button::Style& target,
                                        const Button::Style& source) const
 {
-    target.borderRadius = source.borderRadius != -1 ? source.borderRadius
-                                                    : stylesPainted.rest.borderRadius;
+    target.borderRadius = source.borderRadius != -1.0 ? source.borderRadius
+                                                      : stylesPainted.rest.borderRadius;
     target.borderPen = source.borderPen.style() != Qt::NoPen
                            ? source.borderPen
                            : stylesPainted.rest.borderPen;
@@ -297,12 +297,12 @@ QRect ButtonPrivate::itemRect(Item item) const
     }
 }
 
-qreal ButtonPrivate::calculateRadius(int value) const
+qreal ButtonPrivate::calculateRadius(qreal value) const
 {
     const QRect& b = itemRect(ButtonPrivate::Background);
     return value > Defaults::borderRadiusPercentagePoint
                ? (qMin(b.width(), b.height()) / 2.0)
-                     * (value % Defaults::borderRadiusPercentagePoint) / 100.0
+                     * (value - Defaults::borderRadiusPercentagePoint) / 100.0
                : value;
 }
 
@@ -592,6 +592,7 @@ void Button::setStyles(const Button::Styles& styles)
     d->mergeStyleWithRest(d->stylesPainted.checked, styles.checked);
     d->mergeStyleWithRest(d->stylesPainted.disabled, styles.disabled);
 
+    d->updateFont();
     update();
 }
 
@@ -938,13 +939,12 @@ void Button::paintEvent(QPaintEvent*)
         painter.setOpacity(o);
         if (iconColor.isValid()) {
             const QString& cacheKey = u"Acayip::Button::icon"_s
-                                      % HexString<uint>(iconColor.rgba())
-                                      % HexString<uint>(iconRect.width())
-                                      % HexString<uint>(iconRect.height())
-                                      % HexString<quint8>(d->iconMode())
-                                      % HexString<quint8>(d->iconState())
-                                      % HexString<quint16>(
-                                          qRound(devicePixelRatio() * 1000));
+                  % HexString<uint>(iconColor.rgba())
+                  % HexString<uint>(iconRect.width())
+                  % HexString<uint>(iconRect.height())
+                  % HexString<quint8>(d->iconMode())
+                  % HexString<quint8>(d->iconState())
+                  % HexString<quint16>(qRound(devicePixelRatio() * 1000));
             QPixmap px;
             if (!QPixmapCache::find(cacheKey, &px)) {
                 px = d->icon.pixmap(iconRect.size(),
@@ -975,13 +975,12 @@ void Button::paintEvent(QPaintEvent*)
         painter.setOpacity(o);
         if (iconColor.isValid()) {
             const QString& cacheKey = u"Acayip::Button::menuArrow"_s
-                                      % HexString<uint>(iconColor.rgba())
-                                      % HexString<uint>(menuRect.width())
-                                      % HexString<uint>(menuRect.height())
-                                      % HexString<quint8>(d->iconMode())
-                                      % HexString<quint8>(d->iconState())
-                                      % HexString<quint16>(
-                                          qRound(devicePixelRatio() * 1000));
+                  % HexString<uint>(iconColor.rgba())
+                  % HexString<uint>(menuRect.width())
+                  % HexString<uint>(menuRect.height())
+                  % HexString<quint8>(d->iconMode())
+                  % HexString<quint8>(d->iconState())
+                  % HexString<quint16>(qRound(devicePixelRatio() * 1000));
             QPixmap px;
             if (!QPixmapCache::find(cacheKey, &px)) {
                 px = d->menuArrow.pixmap(menuRect.size(),

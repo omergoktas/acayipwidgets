@@ -4,6 +4,8 @@
 #include "pixelperfectscaling_p.h"
 #include "utils_p.h"
 
+#include <button.h>
+
 #include <QApplication>
 #include <QLayout>
 #include <QMovie>
@@ -20,6 +22,8 @@
 #include <shellscalingapi.h>
 #include <windows.h>
 #endif
+
+using namespace Qt::Literals;
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -64,8 +68,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     const QScreen* screen = windowEntry->screen;
 
     const QFont font = winWidget->font();
-    if (!windowEntry->initialized) {
-        winWidget->setProperty("pps_initialFont", font);
+    if (!winWidget->property("pps_initialFont").isValid()) {
+        if (!windowEntry->initialized)
+            winWidget->setProperty("pps_initialFont", font);
         winWidget->setFont(scaled(screen, font, factor));
     } else {
         const QFont& initialFont = winWidget->property("pps_initialFont").value<QFont>();
@@ -75,8 +80,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     foreach (QWidget* widget, winWidget->findChildren<QWidget*>()) {
         if (!widget->parentWidget() || !widget->parentWidget()->layout()) {
             const QRect& geometry = widget->geometry();
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialGeometry", geometry);
+            if (!widget->property("pps_initialGeometry").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialGeometry", geometry);
                 widget->setGeometry(scaled(screen, geometry, factor));
             } else {
                 const QRect& initialGeometry
@@ -88,8 +94,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         if (!widget->font().isCopyOf(font)
             && !(widget->parentWidget()
                  && widget->font().isCopyOf(widget->parentWidget()->font()))) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialFont", widget->font());
+            if (!widget->property("pps_initialFont").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialFont", widget->font());
                 widget->setFont(scaled(screen, widget->font(), factor));
             } else {
                 const QFont& initialFont
@@ -100,8 +107,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
         const QSize& minimumSize = Utils::explicitWidgetMinMaxSize(widget, true);
         if (!minimumSize.isEmpty()) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialMinimumSize", minimumSize);
+            if (!widget->property("pps_initialMinimumSize").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialMinimumSize", minimumSize);
                 scaledSize = scaled(screen, minimumSize, factor);
             } else {
                 const QSize& initialMinimumSize
@@ -114,8 +122,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         const QSize& maximumSize = Utils::explicitWidgetMinMaxSize(widget, false);
         if (!maximumSize.isEmpty()
             && maximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialMaximumSize", maximumSize);
+            if (!widget->property("pps_initialMaximumSize").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialMaximumSize", maximumSize);
                 scaledSize = scaled(screen, maximumSize, factor);
             } else {
                 const QSize& initialMaximumSize
@@ -127,8 +136,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
         const QSize& iconSize = widget->property("iconSize").toSize();
         if (!iconSize.isNull()) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialIconSize", iconSize);
+            if (!widget->property("pps_initialIconSize").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialIconSize", iconSize);
                 widget->setProperty("iconSize", scaled(screen, iconSize, factor));
             } else {
                 const QSize& initialIconSize
@@ -140,9 +150,10 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
         const QMargins& paddings = widget->property("paddings").value<QMargins>();
         if (!paddings.isNull()) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialPaddings",
-                                    QVariant::fromValue(paddings));
+            if (!widget->property("pps_initialPaddings").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialPaddings",
+                                        QVariant::fromValue(paddings));
                 widget->setProperty("paddings",
                                     QVariant::fromValue(
                                         scaled(screen, paddings, factor)));
@@ -159,8 +170,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
         const QMargins& margins = widget->property("margins").value<QMargins>();
         if (!margins.isNull()) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialMargins", QVariant::fromValue(margins));
+            if (!widget->property("pps_initialMargins").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialMargins", QVariant::fromValue(margins));
                 widget->setProperty("margins",
                                     QVariant::fromValue(
                                         scaled(screen, margins, factor)));
@@ -173,11 +185,44 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
             }
         }
 
+        if (widget->property("styles").isValid()) {
+            int i = 0;
+            Button::Styles styles = widget->property("styles").value<Button::Styles>();
+            for (Button::Style* s : {&styles.rest,
+                                     &styles.hovered,
+                                     &styles.pressed,
+                                     &styles.checked,
+                                     &styles.disabled}) {
+                i++;
+                if (s->borderRadius > 0 && s->borderRadius < Defaults::borderRadiusPercentagePoint)
+                    s->borderRadius = scaled(screen, s->borderRadius, factor);
+                if (s->borderPen.style() != Qt::NoPen)
+                    s->borderPen = scaled(screen, s->borderPen, factor);
+                if (s->borderPenDark.style() != Qt::NoPen)
+                    s->borderPenDark = scaled(screen, s->borderPenDark, factor);
+                if (!s->font.isCopyOf(font)
+                    && !(widget->parentWidget()
+                         && s->font.isCopyOf(widget->parentWidget()->font()))) {
+                    if (!widget->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i))).isValid()) {
+                        if (!windowEntry->initialized)
+                            widget->setProperty(qPrintable(u"pps_initialFont_style_%1"_s.arg(i)), s->font);
+                        s->font = scaled(screen, s->font, factor);
+                    } else {
+                        const QFont& initialFont
+                            = widget->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i))).value<QFont>();
+                        s->font = scaled(screen, s->font, initialFont, factor);
+                    }
+                }
+            }
+            widget->setProperty("styles", QVariant::fromValue(styles));
+        }
+
         bool ok = false;
         int value = widget->property("spacing").toInt(&ok);
         if (ok && value > 0) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialSpacing", value);
+            if (!widget->property("pps_initialSpacing").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialSpacing", value);
                 widget->setProperty("spacing", scaled(screen, value, factor));
             } else {
                 int initialSpacing = widget->property("pps_initialSpacing").toInt();
@@ -189,27 +234,37 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         ok = false;
         value = widget->property("lineWidth").toInt(&ok);
         if (ok && value > 0) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialLineWidth", value);
+            if (!widget->property("pps_initialLineWidth").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialLineWidth", value);
                 widget->setProperty("lineWidth", scaled(screen, value, factor));
             } else {
                 int initialLineWidth = widget->property("pps_initialLineWidth").toInt();
                 widget->setProperty("lineWidth",
-                                    scaled(screen, value, initialLineWidth, factor, false));
+                                    scaled(screen,
+                                           value,
+                                           initialLineWidth,
+                                           factor,
+                                           false));
             }
         }
 
         ok = false;
         value = widget->property("midLineWidth").toInt(&ok);
         if (ok && value > 0) {
-            if (!windowEntry->initialized) {
-                widget->setProperty("pps_initialMidLineWidth", value);
+            if (!widget->property("pps_initialMidLineWidth").isValid()) {
+                if (!windowEntry->initialized)
+                    widget->setProperty("pps_initialMidLineWidth", value);
                 widget->setProperty("midLineWidth", scaled(screen, value, factor));
             } else {
                 int initialMidLineWidth
                     = widget->property("pps_initialMidLineWidth").toInt();
                 widget->setProperty("midLineWidth",
-                                    scaled(screen, value, initialMidLineWidth, factor, false));
+                                    scaled(screen,
+                                           value,
+                                           initialMidLineWidth,
+                                           factor,
+                                           false));
             }
         }
     }
@@ -217,9 +272,10 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     foreach (QLayout* layout, winWidget->findChildren<QLayout*>()) {
         if (!layout->contentsMargins().isNull()) {
             const QMargins& margins = layout->contentsMargins();
-            if (!windowEntry->initialized) {
-                layout->setProperty("pps_initialContentsMargins",
-                                    QVariant::fromValue(margins));
+            if (!layout->property("pps_initialContentsMargins").isValid()) {
+                if (!windowEntry->initialized)
+                    layout->setProperty("pps_initialContentsMargins",
+                                        QVariant::fromValue(margins));
                 layout->setContentsMargins(scaled(screen, margins, factor));
             } else {
                 const QMargins& initialMargins
@@ -230,8 +286,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         }
         int spacing = layout->spacing();
         if (spacing != 0) {
-            if (!windowEntry->initialized) {
-                layout->setProperty("pps_initialSpacing", spacing);
+            if (!layout->property("pps_initialSpacing").isValid()) {
+                if (!windowEntry->initialized)
+                    layout->setProperty("pps_initialSpacing", spacing);
                 layout->setSpacing(scaled(screen, spacing, factor));
             } else {
                 int initialSpacing = layout->property("pps_initialSpacing").toInt();
@@ -241,8 +298,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         for (int i = 0; i < layout->count(); i++) {
             if (auto spacer = layout->itemAt(i)->spacerItem()) {
                 QSize sh = spacer->sizeHint();
-                if (!windowEntry->initialized) {
-                    layout->setProperty("pps_initialSizeHint", sh);
+                if (!layout->property("pps_initialSizeHint").isValid()) {
+                    if (!windowEntry->initialized)
+                        layout->setProperty("pps_initialSizeHint", sh);
                     sh = scaled(screen, sh, factor);
                 } else {
                     const QSize& initialSizeHint
@@ -259,8 +317,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
     foreach (QMovie* movie, winWidget->findChildren<QMovie*>()) {
         const QSize& size = movie->scaledSize();
-        if (!windowEntry->initialized) {
-            movie->setProperty("pps_initialScaledSize", size);
+        if (!movie->property("pps_initialScaledSize").isValid()) {
+            if (!windowEntry->initialized)
+                movie->setProperty("pps_initialScaledSize", size);
             scaledSize = scaled(screen, size, factor);
         } else {
             const QSize& initialScaledSize
@@ -273,8 +332,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 #if defined(ACAYIP_PLATFORM_DESKTOP)
     const QSize& winMinimumSize = Utils::explicitWidgetMinMaxSize(winWidget, true);
     if (!winMinimumSize.isEmpty()) {
-        if (!windowEntry->initialized) {
-            winWidget->setProperty("pps_initialMinimumSize", winMinimumSize);
+        if (!winWidget->property("pps_initialMinimumSize").isValid()) {
+            if (!windowEntry->initialized)
+                winWidget->setProperty("pps_initialMinimumSize", winMinimumSize);
             scaledSize = scaled(screen, winMinimumSize, factor);
         } else {
             const QSize& initialMinimumSize
@@ -287,8 +347,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
     const QSize& winMaximumSize = Utils::explicitWidgetMinMaxSize(winWidget, false);
     if (!winMaximumSize.isEmpty()
         && winMaximumSize != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
-        if (!windowEntry->initialized) {
-            winWidget->setProperty("pps_initialMaximumSize", winMaximumSize);
+        if (!winWidget->property("pps_initialMaximumSize").isValid()) {
+            if (!windowEntry->initialized)
+                winWidget->setProperty("pps_initialMaximumSize", winMaximumSize);
             scaledSize = scaled(screen, winMaximumSize, factor);
         } else {
             const QSize& initialMaximumSize
@@ -300,8 +361,9 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
 
     const QSize& winSize = windowEntry->oldSize;
     const QPoint& winPos = winWidget->pos();
-    if (!windowEntry->initialized) {
-        winWidget->setProperty("pps_initialSize", winSize);
+    if (!winWidget->property("pps_initialSize").isValid()) {
+        if (!windowEntry->initialized)
+            winWidget->setProperty("pps_initialSize", winSize);
         scaledSize = scaled(screen, winSize, factor);
         const QSize& d = (scaledSize - winSize) / 2.0;
         winWidget->move(winPos - QPoint(d.width(), d.height()));

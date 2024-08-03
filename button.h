@@ -31,7 +31,7 @@ class ACAYIPWIDGETS_EXPORT Button : public QPushButton
 public:
     struct Style
     {
-        int borderRadius{-1};
+        qreal borderRadius{-1.0};
         QPen borderPen{Qt::NoPen};
         QPen borderPenDark{Qt::NoPen};
         QColor textColor;
@@ -121,3 +121,6 @@ protected:
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
+
+Q_DECLARE_METATYPE(ACAYIPWIDGETS_PREPEND_NAMESPACE(Button::Style))
+Q_DECLARE_METATYPE(ACAYIPWIDGETS_PREPEND_NAMESPACE(Button::Styles))

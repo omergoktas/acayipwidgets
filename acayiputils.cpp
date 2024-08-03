@@ -194,4 +194,11 @@ QFont Utils::scaled(const QScreen* screen,
     return copy;
 }
 
+QPen Utils::scaled(const QScreen* screen, const QPen& pen, qreal multiply)
+{
+    QPen copy(pen);
+    copy.setWidthF(scaled(screen, copy.widthF(), multiply));
+    return copy;
+}
+
 ACAYIPWIDGETS_END_NAMESPACE

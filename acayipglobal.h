@@ -14,6 +14,7 @@ ACAYIPWIDGETS_BEGIN_NAMESPACE
 class ACAYIPWIDGETS_EXPORT Defaults
 {
     friend class ButtonPrivate;
+    friend class PixelPerfectScaling;
 
     static const int borderRadiusPercentagePoint;
 

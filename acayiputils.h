@@ -73,6 +73,9 @@ inline namespace Utils {
                                       const QFont& font,
                                       const QFont& initialFont,
                                       qreal multiply = 1.0);
+    ACAYIPWIDGETS_EXPORT QPen scaled(const QScreen* screen,
+                                     const QPen& pen,
+                                     qreal multiply = 1.0);
 
     template <typename... Args>
     auto scaled(const QWidget* widget, Args&&... args)
