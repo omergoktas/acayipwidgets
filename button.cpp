@@ -62,6 +62,7 @@ ButtonPrivate::ButtonPrivate()
     , paddings(Defaults::paddings * 1.5)
     , iconEdge(Qt::LeftEdge)
     , textFormat(Qt::AutoText)
+    , rippleStyle(styles.rest)
     , menuArrow(":/acayipwidgets/assets/images/arrow-down.svg")
 {
     autoDefault = false;
@@ -92,6 +93,10 @@ void ButtonPrivate::init()
         QObject::connect(anim, &QVariantAnimation::valueChanged, q, [q, this] {
             updateHoverShadow();
             q->repaint();
+        });
+        QObject::connect(anim, &QVariantAnimation::finished, q, [q, this] {
+            updateHoverShadow();
+            q->update();
         });
     }
 
@@ -272,7 +277,8 @@ void ButtonPrivate::startRippleAnimation(const QPoint& pos)
         QRect bgRect = itemRect(ButtonPrivate::Background);
         qreal hypotenuse = std::sqrt(bgRect.width() * bgRect.width()
                                      + bgRect.height() * bgRect.height());
-        qreal scale = 2.0 * Defaults::animationDuration / 100.0;
+        qreal scale
+            = 6.0; // x2 (for diameter) x3 (1x ripple, 1x wait to fill, 1x fade out)
         QRect rect;
         rect.moveCenter(pos);
         anim->setStartValue(rect);
@@ -284,11 +290,11 @@ void ButtonPrivate::startRippleAnimation(const QPoint& pos)
     }
 }
 
-QPainterPath ButtonPrivate::backgroundPath(const QMargins& m) const
+QPainterPath ButtonPrivate::backgroundPath(const QMarginsF& m) const
 {
     qreal radius = calculateRadius(activeStyle().borderRadius);
     QPainterPath path;
-    path.addRoundedRect(itemRect(ButtonPrivate::Background)
+    path.addRoundedRect(QRectF(itemRect(ButtonPrivate::Background))
                             .adjusted(m.left(), m.top(), -m.right(), -m.bottom()),
                         radius,
                         radius);
@@ -625,6 +631,10 @@ void Button::hideAnimated()
             &QVariantAnimation::valueChanged,
             this,
             qOverload<>(&QWidget::repaint));
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::finished,
+            this,
+            qOverload<>(&QWidget::update));
     if (parentWidget() && parentWidget()->layout()) {
         connect(&d->showHideAnimation,
                 SIGNAL(finished()),
@@ -656,6 +666,10 @@ void Button::showAnimated()
             &QVariantAnimation::valueChanged,
             this,
             qOverload<>(&QWidget::repaint));
+    connect(&d->showHideAnimation,
+            &QVariantAnimation::finished,
+            this,
+            qOverload<>(&QWidget::update));
     d->showHideAnimation.setStartValue(0.0);
     d->showHideAnimation.setEndValue(1.0);
     d->showHideAnimation.start();
@@ -681,12 +695,12 @@ bool Button::event(QEvent* event)
         d->cursor = cursor();
         setCursor(Qt::ArrowCursor);
         d->updateHoverShadow();
-        repaint();
+        update();
     } else if (event->type() == QEvent::HoverLeave) {
         d->hovering = false;
         setCursor(d->cursor);
         d->updateHoverShadow();
-        repaint();
+        update();
     } else if (event->type() == QEvent::HoverMove) {
         auto hover = static_cast<QHoverEvent*>(event);
         if (hitButton(hover->position().toPoint())) {
@@ -699,6 +713,17 @@ bool Button::event(QEvent* event)
         }
         d->updateHoverShadow();
         repaint();
+    } else if (event->type() == QEvent::MouseButtonPress) {
+        auto press = static_cast<QMouseEvent*>(event);
+        if (!d->isRippling() && hitButton(press->position().toPoint())) {
+            if (d->hovering)
+                d->rippleStyle = d->stylesPainted.hovered;
+            else if (d->checkable && d->checked)
+                d->rippleStyle = d->stylesPainted.checked;
+            else
+                d->rippleStyle = d->stylesPainted.rest;
+            update();
+        }
     }
 
     return QPushButton::event(event);
@@ -749,15 +774,6 @@ void Button::paintEvent(QPaintEvent*)
                            == Qt::ColorScheme::Dark;
     const ButtonStyle& style = d->activeStyle();
     const QRect& bgRect = d->itemRect(ButtonPrivate::Background);
-    const QRect& menuRect = d->itemRect(ButtonPrivate::Menu);
-    const QRect& txtRect = d->itemRect(ButtonPrivate::Text);
-    const QRect& iconRect = d->itemRect(ButtonPrivate::Icon);
-    const QPen& bPen = darkStyle ? style.borderPenDark : style.borderPen;
-    const QBrush& bBrush = darkStyle ? style.backgroundBrushDark
-                                     : style.backgroundBrush;
-    const QColor& iconColor = darkStyle ? style.iconColorDark : style.iconColor;
-    const qreal bRadius = d->calculateRadius(style.borderRadius);
-    const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
     const qreal t = d->shortestActiveRippleAnimationTime();
     const qreal o = d->opacity
                     * (d->showHideAnimation.state() == QAbstractAnimation::Running
@@ -768,32 +784,33 @@ void Button::paintEvent(QPaintEvent*)
     painter.setRenderHints(Defaults::renderHints);
 
     // Paint the background
-    painter.setPen(bPen);
-    painter.setBrush(bBrush);
-    painter.setOpacity(o * t);
-    painter.setClipPath(d->backgroundPath());
-    painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
+    {
+        const QPen& bPen = darkStyle ? style.borderPenDark : style.borderPen;
+        const QBrush& bBrush = darkStyle ? style.backgroundBrushDark
+                                         : style.backgroundBrush;
+        const qreal bRadius = d->calculateRadius(style.borderRadius);
+        const qreal a = bPen.style() != Qt::NoPen ? bPen.widthF() / 2.0 : 0;
+        painter.setPen(bPen);
+        painter.setBrush(bBrush);
+        painter.setOpacity(o * t);
+        painter.setClipPath(d->backgroundPath());
+        painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
+    }
 
     // Paint the ripple effect
     if (d->isRippling()) {
-        const QPen& rPen = d->mouseAttached
-                               ? (darkStyle ? d->stylesPainted.hovered.borderPenDark
-                                            : d->stylesPainted.hovered.borderPen)
-                               : (darkStyle ? d->stylesPainted.rest.borderPenDark
-                                            : d->stylesPainted.rest.borderPen);
-        const QBrush& rBrush = d->mouseAttached
-                                   ? (darkStyle
-                                          ? d->stylesPainted.hovered.backgroundBrushDark
-                                          : d->stylesPainted.hovered.backgroundBrush)
-                                   : (darkStyle
-                                          ? d->stylesPainted.rest.backgroundBrushDark
-                                          : d->stylesPainted.rest.backgroundBrush);
-
         // Paint the ripple background
-        painter.setPen(rPen);
-        painter.setBrush(rBrush);
+        const QPen& rbPen = darkStyle ? d->rippleStyle.borderPenDark
+                                      : d->rippleStyle.borderPen;
+        const QBrush& rbBrush = darkStyle ? d->rippleStyle.backgroundBrushDark
+                                          : d->rippleStyle.backgroundBrush;
+        const qreal rbRadius = d->calculateRadius(style.borderRadius);
+        const qreal b = rbPen.style() != Qt::NoPen ? rbPen.widthF() / 2.0 : 0;
+
+        painter.setPen(rbPen);
+        painter.setBrush(rbBrush);
         painter.setOpacity(o * (1.0 - t));
-        painter.drawRoundedRect(bgRect.adjusted(a, a, -a, -a), bRadius, bRadius);
+        painter.drawRoundedRect(bgRect.adjusted(b, b, -b, -b), rbRadius, rbRadius);
 
         // Paint the ripple wave
         for (QVariantAnimation* anim : std::as_const(d->rippleAnimations)) {
@@ -819,8 +836,8 @@ void Button::paintEvent(QPaintEvent*)
                                         Qt::transparent);
                     painter.setBrush(gradient);
                 } else if (suppliedBrush.style() == Qt::NoBrush) {
-                    if (rBrush.style() == Qt::SolidPattern) {
-                        gradient.setColorAt(0.0, strongerColor(rBrush.color()));
+                    if (rbBrush.style() == Qt::SolidPattern) {
+                        gradient.setColorAt(0.0, strongerColor(rbBrush.color()));
                     } else {
                         gradient.setColorAt(
                             0.0,
@@ -837,18 +854,18 @@ void Button::paintEvent(QPaintEvent*)
                 painter.setPen(Qt::NoPen);
                 painter.setOpacity(
                     o * (1.0 - 1.0 / (1.0 + std::exp(-12.0 * (rT - 0.85)))));
-                painter.setClipPath(d->backgroundPath(rPen.style() != Qt::NoPen
-                                                          ? QMargins{qRound(2 * a),
-                                                                     qRound(2 * a),
-                                                                     qRound(2 * a),
-                                                                     qRound(2 * a)}
-                                                          : QMargins{}));
+                painter.setClipPath(d->backgroundPath(
+                    rbPen.style() != Qt::NoPen
+                        ? QMarginsF{2.0 * b, 2.0 * b, 2.0 * b, 2.0 * b}
+                        : QMarginsF{}));
                 painter.drawEllipse(ripRect);
             }
         }
     }
 
     // Paint the icon
+    const QRect& iconRect = d->itemRect(ButtonPrivate::Icon);
+    const QColor& iconColor = darkStyle ? style.iconColorDark : style.iconColor;
     if (!iconRect.isEmpty()) {
         painter.setClipRect(iconRect);
         painter.setOpacity(o);
@@ -876,6 +893,7 @@ void Button::paintEvent(QPaintEvent*)
     }
 
     // Paint the menu arrow
+    const QRect& menuRect = d->itemRect(ButtonPrivate::Menu);
     if (!menuRect.isEmpty()) {
         painter.setClipRect(menuRect);
         painter.setOpacity(o);
@@ -903,8 +921,10 @@ void Button::paintEvent(QPaintEvent*)
     }
 
     // Paint the text
+    const QRect& txtRect = d->itemRect(ButtonPrivate::Text);
+    const QColor& txtColor = darkStyle ? style.textColorDark : style.textColor;
     if (!text().isEmpty()) {
-        painter.setPen(darkStyle ? style.textColorDark : style.textColor);
+        painter.setPen(txtColor);
         painter.setBrush(Qt::NoBrush);
         painter.setOpacity(o);
         painter.setClipRect(txtRect);

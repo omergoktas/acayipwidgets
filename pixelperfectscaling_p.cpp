@@ -310,10 +310,10 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         scaledSize = scaled(screen, winSize, initialSize, factor);
     }
     winWidget->resize(scaledSize);
+#if defined(Q_OS_WINDOWS)
     QTimer::singleShot(1000, winWidget, [winWidget, scaledSize] {
         winWidget->resize(scaledSize);
     });
-#if defined(Q_OS_WINDOWS)
     windowEntry->window->setFlag(Qt::FramelessWindowHint, false);
 #endif
 #endif

@@ -21,7 +21,7 @@ public:
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
-class WidgetHackPrivate : public QWidgetPrivate
+class WidgetHackPrivate final : public QWidgetPrivate
 {};
 class WidgetHack final : public QWidget
 {
