@@ -57,7 +57,7 @@ ButtonPrivate::ButtonPrivate()
     , hoverShadowEnabled(true)
     , elevated(false)
     , opacity(1.0)
-    , spacing(Defaults::spacing / 3.0)
+    , spacing(Defaults::spacing / 2.0)
     , margins(Defaults::margins)
     , paddings(Defaults::paddings * 1.5)
     , iconEdge(Qt::LeftEdge)
@@ -81,7 +81,38 @@ void ButtonPrivate::init()
     q->setAttribute(Qt::WA_Hover);
     q->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     q->setCursor(Qt::PointingHandCursor);
-    q->setStyles(Defaults::buttonStyles);
+    q->setStyles({
+        .rest = {
+            .borderRadius = Defaults::borderRadiusPercentagePoint + 100,
+            .textColor = QColor(0xffffff),
+            .textColorDark = QColor(0xffffff),
+            .iconColor = QColor(0xffffff),
+            .iconColorDark = QColor(0xffffff),
+            .backgroundBrush = QColor(0x0f6cbd),
+            .backgroundBrushDark = QColor(0x115ea3),
+            .font = q->font()
+        },
+        .hovered = {
+            .backgroundBrush = QColor(0x115ea3),
+            .backgroundBrushDark = QColor(0x0f6cbd)
+        },
+        .pressed = {
+            .backgroundBrush = QColor(0x0c3b5e),
+            .backgroundBrushDark = QColor(0x0f6cbd)
+        },
+        .checked = {
+            .backgroundBrush = QColor(0x0f548c),
+            .backgroundBrushDark = QColor(0x0f548c)
+        },
+        .disabled = {
+            .textColor = QColor(0xbdbdbd),
+            .textColorDark = QColor(0x5c5c5c),
+            // .iconColor = QColor(0xbdbdbd),
+            // .iconColorDark = QColor(0x5c5c5c),
+            .backgroundBrush = QColor(0xf0f0f0),
+            .backgroundBrushDark = QColor(0x141414)
+        }
+    });
 
     rippleAnimations.append(new QVariantAnimation(q));
     rippleAnimations.append(new QVariantAnimation(q));
@@ -114,6 +145,10 @@ void ButtonPrivate::init()
     showHideAnimation.setDuration(Defaults::animationDuration);
     showHideAnimation.setEasingCurve(Defaults::outEasingType);
 
+    auto uFont = [this] { updateFont(); };
+    QObject::connect(q, &Button::pressed, q, uFont);
+    QObject::connect(q, &Button::released, q, uFont);
+    QObject::connect(q, &Button::toggled, q, uFont);
     QObject::connect(q, &Button::clicked, q, [q] {
         QTimer::singleShot(Defaults::animationDuration, q, &Button::animatedClicked);
     });
@@ -122,8 +157,8 @@ void ButtonPrivate::init()
 /*!
  *  \internal
 */
-void ButtonPrivate::mergeStyleWithRest(ButtonStyle& target,
-                                       const ButtonStyle& source) const
+void ButtonPrivate::mergeStyleWithRest(Button::Style& target,
+                                       const Button::Style& source) const
 {
     target.borderRadius = source.borderRadius != -1 ? source.borderRadius
                                                     : stylesPainted.rest.borderRadius;
@@ -149,6 +184,8 @@ void ButtonPrivate::mergeStyleWithRest(ButtonStyle& target,
     target.backgroundBrushDark = source.backgroundBrushDark.style() != Qt::NoBrush
                                      ? source.backgroundBrushDark
                                      : stylesPainted.rest.backgroundBrushDark;
+    target.font = !source.font.isCopyOf(QFont()) ? source.font
+                                                 : stylesPainted.rest.font;
 }
 
 void ButtonPrivate::updateTextDocumentContent()
@@ -301,7 +338,7 @@ QPainterPath ButtonPrivate::backgroundPath(const QMarginsF& m) const
     return path;
 }
 
-const ButtonStyle& ButtonPrivate::activeStyle() const
+const Button::Style& ButtonPrivate::activeStyle() const
 {
     Q_Q(const Button);
     if (!q->isEnabled())
@@ -367,6 +404,31 @@ void ButtonPrivate::updateHoverShadow()
             shadowAnimation.start();
         }
     }
+}
+
+void ButtonPrivate::updateFont()
+{
+    Q_Q(Button);
+    const Button::Style& style = activeStyle();
+    if (!q->font().isCopyOf(style.font))
+        q->setFont(style.font);
+}
+
+QIcon::Mode ButtonPrivate::iconMode() const
+{
+    Q_Q(const Button);
+    if (!q->isEnabled())
+        return QIcon::Disabled;
+    if (hovering)
+        return QIcon::Active;
+    if (q->hasFocus())
+        return QIcon::Selected;
+    return QIcon::Normal;
+}
+
+QIcon::State ButtonPrivate::iconState() const
+{
+    return (checkable && checked) ? QIcon::On : QIcon::Off;
 }
 
 /*!
@@ -512,13 +574,13 @@ void Button::setRippleBrush(const QBrush& brush, const QBrush& brushDark)
     update();
 }
 
-const ButtonStyles& Button::styles() const
+const Button::Styles& Button::styles() const
 {
     Q_D(const Button);
     return d->styles;
 }
 
-void Button::setStyles(const ButtonStyles& styles)
+void Button::setStyles(const Button::Styles& styles)
 {
     Q_D(Button);
 
@@ -695,16 +757,18 @@ bool Button::event(QEvent* event)
         d->cursor = cursor();
         setCursor(Qt::ArrowCursor);
         d->updateHoverShadow();
+        d->updateFont();
         update();
     } else if (event->type() == QEvent::HoverLeave) {
         d->hovering = false;
         setCursor(d->cursor);
         d->updateHoverShadow();
+        d->updateFont();
         update();
     } else if (event->type() == QEvent::HoverMove) {
         auto hover = static_cast<QHoverEvent*>(event);
         if (hitButton(hover->position().toPoint())) {
-            if (d->mouseAttached)
+            if (d->mouseAttached && isEnabled())
                 d->hovering = true;
             setCursor(d->cursor);
         } else {
@@ -712,6 +776,7 @@ bool Button::event(QEvent* event)
             setCursor(Qt::ArrowCursor);
         }
         d->updateHoverShadow();
+        d->updateFont();
         repaint();
     } else if (event->type() == QEvent::MouseButtonPress) {
         auto press = static_cast<QMouseEvent*>(event);
@@ -722,7 +787,7 @@ bool Button::event(QEvent* event)
                 d->rippleStyle = d->stylesPainted.checked;
             else
                 d->rippleStyle = d->stylesPainted.rest;
-            update();
+            repaint();
         }
     }
 
@@ -738,6 +803,8 @@ void Button::changeEvent(QEvent* event)
         d->updateTextDocumentContent();
         updateGeometry();
         update();
+    } else if (event->type() == QEvent::EnabledChange) {
+        d->updateFont();
     }
 
     QPushButton::changeEvent(event);
@@ -772,7 +839,7 @@ void Button::paintEvent(QPaintEvent*)
 
     const bool darkStyle = QGuiApplication::styleHints()->colorScheme()
                            == Qt::ColorScheme::Dark;
-    const ButtonStyle& style = d->activeStyle();
+    const Style& style = d->activeStyle();
     const QRect& bgRect = d->itemRect(ButtonPrivate::Background);
     const qreal t = d->shortestActiveRippleAnimationTime();
     const qreal o = d->opacity
@@ -874,11 +941,16 @@ void Button::paintEvent(QPaintEvent*)
                                       % HexString<uint>(iconColor.rgba())
                                       % HexString<uint>(iconRect.width())
                                       % HexString<uint>(iconRect.height())
+                                      % HexString<quint8>(d->iconMode())
+                                      % HexString<quint8>(d->iconState())
                                       % HexString<quint16>(
                                           qRound(devicePixelRatio() * 1000));
             QPixmap px;
             if (!QPixmapCache::find(cacheKey, &px)) {
-                px = d->icon.pixmap(iconRect.size(), devicePixelRatio());
+                px = d->icon.pixmap(iconRect.size(),
+                                    devicePixelRatio(),
+                                    d->iconMode(),
+                                    d->iconState());
                 QPainter p(&px);
                 p.setRenderHints(painter.renderHints());
                 p.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -888,7 +960,11 @@ void Button::paintEvent(QPaintEvent*)
             }
             painter.drawPixmap(iconRect, px);
         } else {
-            d->icon.paint(&painter, iconRect);
+            d->icon.paint(&painter,
+                          iconRect,
+                          Qt::AlignCenter,
+                          d->iconMode(),
+                          d->iconState());
         }
     }
 
@@ -902,11 +978,16 @@ void Button::paintEvent(QPaintEvent*)
                                       % HexString<uint>(iconColor.rgba())
                                       % HexString<uint>(menuRect.width())
                                       % HexString<uint>(menuRect.height())
+                                      % HexString<quint8>(d->iconMode())
+                                      % HexString<quint8>(d->iconState())
                                       % HexString<quint16>(
                                           qRound(devicePixelRatio() * 1000));
             QPixmap px;
             if (!QPixmapCache::find(cacheKey, &px)) {
-                px = d->menuArrow.pixmap(menuRect.size(), devicePixelRatio());
+                px = d->menuArrow.pixmap(menuRect.size(),
+                                         devicePixelRatio(),
+                                         d->iconMode(),
+                                         d->iconState());
                 QPainter p(&px);
                 p.setRenderHints(painter.renderHints());
                 p.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -916,7 +997,11 @@ void Button::paintEvent(QPaintEvent*)
             }
             painter.drawPixmap(menuRect, px);
         } else {
-            d->menuArrow.paint(&painter, menuRect);
+            d->menuArrow.paint(&painter,
+                               menuRect,
+                               Qt::AlignCenter,
+                               d->iconMode(),
+                               d->iconState());
         }
     }
 

@@ -34,16 +34,19 @@ public:
     ButtonPrivate();
     enum Item { Background, Icon, Menu, Text };
     void init();
-    void mergeStyleWithRest(ButtonStyle& target, const ButtonStyle& source) const;
+    void mergeStyleWithRest(Button::Style& target, const Button::Style& source) const;
     void updateTextDocumentContent();
     QRect itemRect(Item item) const;
     qreal calculateRadius(int value) const;
     void startRippleAnimation(const QPoint& pos);
     QPainterPath backgroundPath(const QMarginsF& margins = QMargins()) const;
-    const ButtonStyle& activeStyle() const;
+    const Button::Style& activeStyle() const;
     bool isRippling() const;
     qreal shortestActiveRippleAnimationTime() const;
     void updateHoverShadow();
+    void updateFont();
+    QIcon::Mode iconMode() const;
+    QIcon::State iconState() const;
 
     bool mouseAttached;
     bool hoverShadowEnabled;
@@ -54,9 +57,9 @@ public:
     QMargins paddings;
     Qt::Edge iconEdge;
     Qt::TextFormat textFormat;
-    ButtonStyles styles;
-    ButtonStyles stylesPainted;
-    ButtonStyle& rippleStyle;
+    Button::Styles styles;
+    Button::Styles stylesPainted;
+    Button::Style& rippleStyle;
     QTextDocument textDocument;
     QSize textDocumentSizeHint;
     QCursor cursor;

@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include <private/qfusionstyle_p.h>
+#include <QCommonStyle>
 
-class AcayipStyle final : public QFusionStyle
+class AcayipStyle final : public QCommonStyle
 {
     Q_OBJECT
     Q_DISABLE_COPY(AcayipStyle)

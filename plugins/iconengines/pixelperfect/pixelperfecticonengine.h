@@ -44,8 +44,13 @@ private:
     const PixelPerfectIconEngineEntryMap& activeEntries() const;
     QString cacheKeyFor(const QString& filePath,
                         const QSize& size,
-                        qreal devicePixelRatio) const;
-    QPixmap bestMatch(const QSize& size, qreal devicePixelRatio) const;
+                        qreal devicePixelRatio,
+                        QIcon::Mode mode,
+                        QIcon::State state) const;
+    QPixmap bestMatch(const QSize& size,
+                      qreal devicePixelRatio,
+                      QIcon::Mode mode,
+                      QIcon::State state) const;
     QRect greaterRect(const QSize& size, qreal devicePixelRatio) const;
 
 private:

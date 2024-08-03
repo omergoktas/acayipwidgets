@@ -4,6 +4,7 @@
 #include "pixelperfecticonengine.h"
 
 #include <private/qhexstring_p.h>
+#include <private/qguiapplication_p.h>
 
 #include <QDir>
 #include <QFileInfo>
@@ -43,7 +44,8 @@ void PixelPerfectIconEngine::paint(QPainter* painter,
 {
     Q_UNUSED(mode)
     Q_UNUSED(state)
-    const QPixmap& px = bestMatch(rect.size(), painter->device()->devicePixelRatio());
+    const QPixmap& px
+        = bestMatch(rect.size(), painter->device()->devicePixelRatio(), mode, state);
     QRectF pRect({0, 0}, QSizeF(px.size()) / px.devicePixelRatio());
     pRect.moveCenter(QRectF(rect).center());
     painter->drawPixmap(int(qMax(pRect.x(), qreal(rect.x()))),
@@ -101,7 +103,9 @@ const PixelPerfectIconEngineEntryMap& PixelPerfectIconEngine::activeEntries() co
 
 QString PixelPerfectIconEngine::cacheKeyFor(const QString& filePath,
                                             const QSize& size,
-                                            qreal devicePixelRatio) const
+                                            qreal devicePixelRatio,
+                                            QIcon::Mode mode,
+                                            QIcon::State state) const
 {
     QFileInfo info(filePath);
     return key()
@@ -110,11 +114,15 @@ QString PixelPerfectIconEngine::cacheKeyFor(const QString& filePath,
            % HexString<quint64>(info.size())
            % HexString<uint>(size.width())
            % HexString<uint>(size.height())
+           % HexString<quint8>(mode)
+           % HexString<quint8>(state)
            % HexString<quint16>(qRound(devicePixelRatio * 1000));
 }
 
 QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
-                                          qreal devicePixelRatio) const
+                                          qreal devicePixelRatio,
+                                          QIcon::Mode mode,
+                                          QIcon::State state) const
 {
     QPixmap px;
     const QSizeF& requestedSize = greaterRect(size, devicePixelRatio).size();
@@ -131,9 +139,8 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
         int scale = qMin(qFloor(rw / iw), qFloor(rh / ih));
 
         if (scale >= 1 && (rw - iw * scale < rw * 0.21 || rh - ih * scale < rh * 0.21)) {
-            const QString& cacheKey = cacheKeyFor(i.value().filePath,
-                                                  i.value().size,
-                                                  scale);
+            const QString& cacheKey
+                = cacheKeyFor(i.value().filePath, i.value().size, scale, mode, state);
             if (!QPixmapCache::find(cacheKey, &px)) {
                 QImageReader reader(i.value().filePath);
                 if (scale > 1) {
@@ -156,6 +163,14 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                 } else {
                     px = QPixmap::fromImage(reader.read());
                 }
+                if (mode != QIcon::Normal) {
+                    QPixmap generated = px;
+                    if (QGuiApplication* guiApp = qobject_cast<QGuiApplication*>(qApp))
+                        generated = static_cast<QGuiApplicationPrivate*>(QObjectPrivate::get(guiApp))
+                                        ->applyQIconStyleHelper(mode, px);
+                    if (!generated.isNull())
+                        px = generated;
+                }
                 px.setDevicePixelRatio(devicePixelRatio);
                 QPixmapCache::insert(cacheKey, px);
             }
@@ -172,9 +187,8 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
         qreal scale = qMin(rw / iw, rh / ih);
 
         if (scale >= 1) {
-            const QString& cacheKey = cacheKeyFor(i.value().filePath,
-                                                  i.value().size,
-                                                  scale);
+            const QString& cacheKey
+                = cacheKeyFor(i.value().filePath, i.value().size, scale, mode, state);
             if (!QPixmapCache::find(cacheKey, &px)) {
                 QImageReader reader(i.value().filePath);
                 if (qFuzzyCompare(scale, 1.0)) {
@@ -197,6 +211,14 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                         px = pxx;
                     }
                 }
+                if (mode != QIcon::Normal) {
+                    QPixmap generated = px;
+                    if (QGuiApplication* guiApp = qobject_cast<QGuiApplication*>(qApp))
+                        generated = static_cast<QGuiApplicationPrivate*>(QObjectPrivate::get(guiApp))
+                                        ->applyQIconStyleHelper(mode, px);
+                    if (!generated.isNull())
+                        px = generated;
+                }
                 px.setDevicePixelRatio(devicePixelRatio);
                 QPixmapCache::insert(cacheKey, px);
             }
@@ -213,9 +235,8 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
         qreal scale = qMin(rw / iw, rh / ih);
 
         if (scale <= 1.0) {
-            const QString& cacheKey = cacheKeyFor(i.value().filePath,
-                                                  i.value().size,
-                                                  scale);
+            const QString& cacheKey
+                = cacheKeyFor(i.value().filePath, i.value().size, scale, mode, state);
             if (!QPixmapCache::find(cacheKey, &px)) {
                 QImageReader reader(i.value().filePath);
                 if (qFuzzyCompare(scale, 1.0)) {
@@ -237,6 +258,14 @@ QPixmap PixelPerfectIconEngine::bestMatch(const QSize& size,
                         painter.end();
                         px = pxx;
                     }
+                }
+                if (mode != QIcon::Normal) {
+                    QPixmap generated = px;
+                    if (QGuiApplication* guiApp = qobject_cast<QGuiApplication*>(qApp))
+                        generated = static_cast<QGuiApplicationPrivate*>(QObjectPrivate::get(guiApp))
+                                        ->applyQIconStyleHelper(mode, px);
+                    if (!generated.isNull())
+                        px = generated;
                 }
                 px.setDevicePixelRatio(devicePixelRatio);
                 QPixmapCache::insert(cacheKey, px);
@@ -272,7 +301,8 @@ QPixmap PixelPerfectIconEngine::scaledPixmap(const QSize& size,
         return QPixmap();
 
     QPixmap px(greaterRect(size, scale).size());
-    const QString& cacheKey = cacheKeyFor(activeEntries().first().filePath, size, scale);
+    const QString& cacheKey
+        = cacheKeyFor(activeEntries().first().filePath, size, scale, mode, state);
     if (!QPixmapCache::find(cacheKey, &px)) {
         px.fill(Qt::transparent);
         QPainter painter(&px);

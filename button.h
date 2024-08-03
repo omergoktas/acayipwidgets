@@ -23,9 +23,34 @@ class ACAYIPWIDGETS_EXPORT Button : public QPushButton
     Q_PROPERTY(QMargins paddings READ paddings WRITE setPaddings)
     Q_PROPERTY(Qt::Edge iconEdge READ iconEdge WRITE setIconEdge)
     Q_PROPERTY(Qt::TextFormat textFormat READ textFormat WRITE setTextFormat)
+    Q_PROPERTY(Styles styles READ styles WRITE setStyles)
     Q_PROPERTY(bool elevated READ isElevated WRITE setElevated)
     Q_PROPERTY(
         bool hoverShadowEnabled READ isHoverShadowEnabled WRITE setHoverShadowEnabled)
+
+public:
+    struct Style
+    {
+        int borderRadius{-1};
+        QPen borderPen{Qt::NoPen};
+        QPen borderPenDark{Qt::NoPen};
+        QColor textColor;
+        QColor textColorDark;
+        QColor iconColor;
+        QColor iconColorDark;
+        QBrush backgroundBrush;
+        QBrush backgroundBrushDark;
+        QFont font;
+    };
+
+    struct Styles
+    {
+        Style rest;
+        Style hovered;
+        Style pressed;
+        Style checked;
+        Style disabled;
+    };
 
 public:
     explicit Button(QWidget* parent = nullptr);
@@ -53,8 +78,8 @@ public:
     const QBrush& rippleBrush(bool dark) const;
     void setRippleBrush(const QBrush& brush, const QBrush& brushDark);
 
-    const ButtonStyles& styles() const;
-    void setStyles(const ButtonStyles& styles);
+    const Styles& styles() const;
+    void setStyles(const Styles& styles);
 
     bool isElevated() const;
     void setElevated(bool elevated);
@@ -85,9 +110,11 @@ protected:
 
 private:
     using QPushButton::autoDefault;
+    using QPushButton::font;
     using QPushButton::isFlat;
     using QPushButton::setAutoDefault;
     using QPushButton::setFlat;
+    using QPushButton::setFont;
 
 protected:
     Button(ButtonPrivate& dd, QWidget* parent);

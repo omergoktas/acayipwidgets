@@ -9,7 +9,7 @@
 QPalette AcayipStyle::standardPalette() const
 {
     static const QPalette lightPalette = [this]() {
-        QPalette palette(QFusionStyle::standardPalette());
+        QPalette palette(QCommonStyle::standardPalette());
         palette.setColor(QPalette::Active, QPalette::Text, 0x181818);
         palette.setColor(QPalette::Inactive, QPalette::Text, 0x181818);
         palette.setColor(QPalette::Disabled, QPalette::Text, 0x656565);
@@ -39,7 +39,7 @@ QPalette AcayipStyle::standardPalette() const
     }();
 
     static const QPalette darkPalette = [this]() {
-        QPalette palette(QFusionStyle::standardPalette());
+        QPalette palette(QCommonStyle::standardPalette());
         palette.setColor(QPalette::Active, QPalette::Text, 0xf0f0f0);
         palette.setColor(QPalette::Inactive, QPalette::Text, 0xf0f0f0);
         palette.setColor(QPalette::Disabled, QPalette::Text, 0x707070);

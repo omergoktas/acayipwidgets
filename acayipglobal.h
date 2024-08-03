@@ -5,34 +5,11 @@
 
 #include <acayiputils.h>
 
-#include <QBrush>
 #include <QEasingCurve>
+#include <QMargins>
 #include <QPainter>
-#include <QPen>
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
-
-struct ButtonStyle
-{
-    int borderRadius{-1};
-    QPen borderPen{Qt::NoPen};
-    QPen borderPenDark{Qt::NoPen};
-    QColor textColor;
-    QColor textColorDark;
-    QColor iconColor;
-    QColor iconColorDark;
-    QBrush backgroundBrush;
-    QBrush backgroundBrushDark;
-};
-
-struct ButtonStyles
-{
-    ButtonStyle rest;
-    ButtonStyle hovered;
-    ButtonStyle pressed;
-    ButtonStyle checked;
-    ButtonStyle disabled;
-};
 
 class ACAYIPWIDGETS_EXPORT Defaults
 {
@@ -49,7 +26,6 @@ public:
     static QEasingCurve::Type outEasingType;
     static QEasingCurve::Type inEasingType;
     static QPainter::RenderHints renderHints;
-    static ButtonStyles buttonStyles;
 };
 
 ACAYIPWIDGETS_END_NAMESPACE
