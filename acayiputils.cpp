@@ -167,9 +167,7 @@ QMargins Utils::scaled(const QScreen* screen,
 QFont Utils::scaled(const QScreen* screen, const QFont& font, qreal multiply)
 {
     QFont copy(font);
-    if (copy.pixelSize() == -1)
-        copy.setPointSizeF(scaled(screen, copy.pointSizeF(), multiply));
-    else
+    if (copy.pixelSize() != -1)
         copy.setPixelSize(scaled(screen, copy.pixelSize(), multiply));
     return copy;
 }
@@ -180,9 +178,7 @@ QFont Utils::scaled(const QScreen* screen,
                     qreal multiply)
 {
     QFont copy(font);
-    if (copy.pixelSize() == -1) {
-        copy.setPointSizeF(scaled(screen, copy.pointSizeF(), multiply));
-    } else {
+    if (copy.pixelSize() != -1) {
         qreal initializer = multiply / scaled(screen, 1.0);
         qreal sps = scaled(screen, qreal(font.pixelSize()), initializer);
         int ips = initialFont.pixelSize();
