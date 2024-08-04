@@ -6,7 +6,7 @@ find_package(Qt${QT_VERSION_MAJOR}
         BodymovinPrivate
 )
 
-qt_add_library(LottieIOPlugin
+qt_add_library(lottieio
     OBJECT
         lottieiohandler.h
         lottieiohandler.cpp
@@ -16,9 +16,9 @@ qt_add_library(LottieIOPlugin
         main.cpp
 )
 
-target_link_libraries(LottieIOPlugin
+target_link_libraries(lottieio
     PRIVATE
         Qt::BodymovinPrivate
 )
 
-target_compile_definitions(LottieIOPlugin PRIVATE QT_STATICPLUGIN)
+target_compile_definitions(lottieio PRIVATE QT_STATICPLUGIN)

@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 # SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-qt_add_library(PixelPerfectIconEnginePlugin
+qt_add_library(pixelperfectengine
     OBJECT
         pixelperfecticonengine.h
         pixelperfecticonengine.cpp
@@ -9,9 +9,9 @@ qt_add_library(PixelPerfectIconEnginePlugin
         main.cpp
 )
 
-target_link_libraries(PixelPerfectIconEnginePlugin
+target_link_libraries(pixelperfectengine
     PRIVATE
         Qt::GuiPrivate
 )
 
-target_compile_definitions(PixelPerfectIconEnginePlugin PRIVATE QT_STATICPLUGIN)
+target_compile_definitions(pixelperfectengine PRIVATE QT_STATICPLUGIN)

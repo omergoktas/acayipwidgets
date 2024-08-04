@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.27)
 
 project(AcayipWidgets
-    VERSION 0.1.0
+    VERSION 0.1.1
     HOMEPAGE_URL omergoktas.com
     DESCRIPTION "The Acayip Widgets Project."
 )
@@ -15,7 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR}
         Svg
 )
 
-qt_add_library(AcayipWidgets
+qt_add_library(acayipwidgets
     acayipglobal.h
     acayipglobal.cpp
     acayiputils.h
@@ -26,7 +26,7 @@ qt_add_library(AcayipWidgets
     button.cpp
 )
 
-target_sources(AcayipWidgets PRIVATE
+target_sources(acayipwidgets PRIVATE
     utils_p.h
     utils_p.cpp
     boxlayout_p.h
@@ -42,12 +42,12 @@ file(GLOB_RECURSE resources
     ${CMAKE_CURRENT_SOURCE_DIR} assets/*
 )
 
-qt_add_resources(AcayipWidgets acayipwidgets_assets
+qt_add_resources(acayipwidgets acayipwidgets_assets
     PREFIX /acayipwidgets
     FILES ${resources}
 )
 
-target_include_directories(AcayipWidgets
+target_include_directories(acayipwidgets
     PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR} # acayipwidgets_export.h, acayipconfig.h
     INTERFACE
@@ -58,15 +58,15 @@ target_include_directories(AcayipWidgets
 
 # FIXME: Test the order of linkage as a mechanism to solve static initialization order
 # fiasco problem for the PixelPerfectIconEnginePlugin and to make it load first.
-target_link_libraries(AcayipWidgets
+target_link_libraries(acayipwidgets
     PUBLIC
         Qt::Widgets
     PRIVATE
         Qt::Svg
         Qt::WidgetsPrivate
-        AcayipStylePlugin
-        LottieIOPlugin
-        PixelPerfectIconEnginePlugin
+        acayipstyle
+        lottieio
+        pixelperfectengine
         $<$<PLATFORM_ID:Windows>:shcore>
 )
 
@@ -78,4 +78,4 @@ else()
 endif()
 configure_file(acayipconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/acayipconfig.h @ONLY)
 
-generate_export_header(AcayipWidgets)
+generate_export_header(acayipwidgets)
