@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "pixelperfectscaling_p.h"
+#include "acayiputils.h"
 #include "utils_p.h"
 
 #include <button.h>
@@ -201,6 +202,7 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
                 if (s->borderPenDark.style() != Qt::NoPen)
                     s->borderPenDark = scaled(screen, s->borderPenDark, factor);
                 if (!s->font.isCopyOf(font)
+                    && !s->font.isCopyOf(QFont())
                     && !(widget->parentWidget()
                          && s->font.isCopyOf(widget->parentWidget()->font()))) {
                     if (!widget->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i))).isValid()) {

@@ -1,4 +1,4 @@
-#include <acayipglobal.h>
+#include "acayiputils.h"
 
 #include <private/qhighdpiscaling_p.h>
 #include <qpa/qplatformscreen.h>

@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include <acayipconfig.h>
-#include <acayipwidgets_export.h>
+#include <acayipglobal.h>
 
 #include <QWidget>
 

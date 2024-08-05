@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <acayiputils.h>
+#include <acayipconfig.h>
+#include <acayipwidgets_export.h>
 
 #include <QEasingCurve>
 #include <QMargins>

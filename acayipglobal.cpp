@@ -48,7 +48,7 @@ static void prepare()
 
 static void init()
 {
-    // TODO: Find a way to knock down static icon engine plugins too
+    // FIXME: Find a way to knock down static icon engine plugins too
     // Knock down existing icon engine plugins for the sake of PixelPerfectIconEngine
     Utils::disableExistingIconEngines();
 

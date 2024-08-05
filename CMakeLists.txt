@@ -24,6 +24,8 @@ qt_add_library(acayipwidgets
     boxlayout.cpp
     button.h
     button.cpp
+    tabs.h
+    tabs.cpp
 )
 
 target_sources(acayipwidgets PRIVATE
@@ -31,8 +33,10 @@ target_sources(acayipwidgets PRIVATE
     utils_p.cpp
     boxlayout_p.h
     button_p.h
+    tabs_p.h
     pixelperfectscaling_p.h
     pixelperfectscaling_p.cpp
+    qtbaggage_p.cpp
 )
 
 add_subdirectory(plugins)

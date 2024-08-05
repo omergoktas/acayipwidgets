@@ -35,7 +35,7 @@ public:
     bool sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent* event) override;
     static void init();
 
-protected slots:
+protected:
     void removeWindow(QObject* windowObj);
     void resizeWindow(WindowEntry* windowEntry);
     QWidget* windowWidget(const QWindow* window) const;

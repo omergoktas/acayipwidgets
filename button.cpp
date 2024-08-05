@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
 #include "button_p.h"
+#include "acayiputils.h"
 
 #include <private/qhexstring_p.h>
 
@@ -13,28 +14,9 @@
 using namespace Qt::Literals;
 
 /*
- * FIXME: QGraphicsDropShadowEffect causes vibrations when hovered, especially
+ * TODO: QGraphicsDropShadowEffect causes vibrations when hovered, especially
  * visible when the button has an icon
 */
-
-/*
- * TODO: Remove QAbstractButtonPrivate implementation down below once
- * QPushButtonPrivate moves its constructor function over to .cpp file
-*/
-QAbstractButtonPrivate::QAbstractButtonPrivate(QSizePolicy::ControlType type)
-    : shortcutId(0)
-    , checkable(false)
-    , checked(false)
-    , autoRepeat(false)
-    , autoExclusive(false)
-    , down(false)
-    , blockRefresh(false)
-    , pressed(false)
-    , group(nullptr)
-    , autoRepeatDelay(300)
-    , autoRepeatInterval(100)
-    , controlType(type)
-{}
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
@@ -410,8 +392,14 @@ void ButtonPrivate::updateFont()
 {
     Q_Q(Button);
     const Button::Style& style = activeStyle();
-    if (!q->font().isCopyOf(style.font))
+    if (style.font.isCopyOf(QFont())) {
+        if (q->parentWidget())
+            q->setFont(q->parentWidget()->font());
+        else
+            q->setFont(style.font);
+    } else if (!style.font.isCopyOf(q->font())) {
         q->setFont(style.font);
+    }
 }
 
 QIcon::Mode ButtonPrivate::iconMode() const

@@ -84,4 +84,7 @@ QSize Utils::explicitWidgetMinMaxSize(const QWidget* widget, bool minimum)
     return WidgetHack::explicitMinMaxSize(widget, minimum);
 }
 
+// FIXME: Put all plugin classes under Acayip namespace and make sure
+// they use global render settings too (i.e., like Defaults::renderHints)
+
 ACAYIPWIDGETS_END_NAMESPACE

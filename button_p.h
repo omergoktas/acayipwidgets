@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <acayipglobal.h>
-
 #include "button.h"
 
 #include <private/qpushbutton_p.h>

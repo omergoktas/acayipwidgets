@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <acayipglobal.h>
+#include "boxlayout.h"
 
 #include <QMap>
 #include <QParallelAnimationGroup>
@@ -21,7 +21,7 @@ class BoxLayout;
 
 /*
  * We don't implement the private class like we usually do
- * because Qt made the symbols of QBoxLayoutPrivate hidden
+ * because Qt made the declaration of QBoxLayoutPrivate unavailable
 */
 
 class BoxLayoutPrivate
