@@ -22,7 +22,10 @@ class TabsPrivate : public QScrollAreaPrivate
 public:
     TabsPrivate();
     void init();
+    qreal calculateRadius(qreal value) const;
 
+    qreal opacity;
+    Tabs::Style style;
     BoxLayout* contentLayout;
 };
 

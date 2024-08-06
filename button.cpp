@@ -72,7 +72,6 @@ void ButtonPrivate::init()
             .iconColorDark = QColor(0xffffff),
             .backgroundBrush = QColor(0x0f6cbd),
             .backgroundBrushDark = QColor(0x115ea3),
-            .font = q->font()
         },
         .hovered = {
             .backgroundBrush = QColor(0x115ea3),
@@ -285,7 +284,7 @@ qreal ButtonPrivate::calculateRadius(qreal value) const
     return value > Defaults::borderRadiusPercentagePoint
                ? (qMin(b.width(), b.height()) / 2.0)
                      * (value - Defaults::borderRadiusPercentagePoint) / 100.0
-               : value;
+               : (value < 0 ? 0 : value);
 }
 
 void ButtonPrivate::startRippleAnimation(const QPoint& pos)
@@ -359,7 +358,7 @@ qreal ButtonPrivate::shortestActiveRippleAnimationTime() const
 void ButtonPrivate::updateHoverShadow()
 {
     Q_Q(const Button);
-    if (hoverShadowEnabled && shadowEffect && mouseAttached) {
+    if ((elevated || hoverShadowEnabled) && shadowEffect && mouseAttached) {
         const qreal offset = scaled(q, 3.0);
         const qreal t = shortestActiveRippleAnimationTime();
         if (hovering) {
@@ -393,9 +392,11 @@ void ButtonPrivate::updateFont()
     Q_Q(Button);
     const Button::Style& style = activeStyle();
     if (style.font.isCopyOf(QFont())) {
-        if (q->parentWidget())
+        if (hovering)
+            return;
+        if (q->parentWidget() && !q->parentWidget()->font().isCopyOf(q->font()))
             q->setFont(q->parentWidget()->font());
-        else
+        else if (!style.font.isCopyOf(q->font()))
             q->setFont(style.font);
     } else if (!style.font.isCopyOf(q->font())) {
         q->setFont(style.font);
@@ -419,28 +420,7 @@ QIcon::State ButtonPrivate::iconState() const
     return (checkable && checked) ? QIcon::On : QIcon::Off;
 }
 
-/*!
-    Constructs a push button with no text and a \a parent.
-*/
-Button::Button(QWidget* parent)
-    : Button(QIcon(), QString(), parent)
-{}
-
-/*!
-    Constructs a push button with the parent \a parent and the text \a
-    text.
-*/
-Button::Button(const QString& text, QWidget* parent)
-    : Button(QIcon(), text, parent)
-{}
-
-/*!
-    Constructs a push button with an \a icon, a \a text, and a \a parent.
-
-    Note that you can also pass a QPixmap object as an icon (thanks to
-    the implicit type conversion provided by C++).
-*/
-Button::Button(const QIcon& icon, const QString& text, QWidget* parent)
+Button::Button(const QString& text, const QIcon& icon, QWidget* parent)
     : Button(*new ButtonPrivate, parent)
 {
     setText(text);
@@ -484,7 +464,7 @@ void Button::setSpacing(int spacing)
     update();
 }
 
-const QMargins& Button::margins() const
+QMargins Button::margins() const
 {
     Q_D(const Button);
     return d->margins;
@@ -498,7 +478,7 @@ void Button::setMargins(const QMargins& margins)
     update();
 }
 
-const QMargins& Button::paddings() const
+QMargins Button::paddings() const
 {
     Q_D(const Button);
     return d->paddings;
@@ -603,7 +583,7 @@ void Button::setElevated(bool elevated)
 bool Button::isHoverShadowEnabled() const
 {
     Q_D(const Button);
-    return d->elevated;
+    return d->hoverShadowEnabled;
 }
 
 void Button::setHoverShadowEnabled(bool hoverShadowEnabled)

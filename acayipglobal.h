@@ -16,6 +16,8 @@ class ACAYIPWIDGETS_EXPORT Defaults
 {
     friend class ButtonPrivate;
     friend class PixelPerfectScaling;
+    friend class Tabs;
+    friend class TabsPrivate;
 
     static const int borderRadiusPercentagePoint;
 

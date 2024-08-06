@@ -53,9 +53,9 @@ public:
     };
 
 public:
-    explicit Button(QWidget* parent = nullptr);
-    explicit Button(const QString& text, QWidget* parent = nullptr);
-    explicit Button(const QIcon& icon, const QString& text, QWidget* parent = nullptr);
+    explicit Button(const QString& text = QString(),
+                    const QIcon& icon = QIcon(),
+                    QWidget* parent = nullptr);
 
     qreal opacity() const;
     void setOpacity(qreal opacity);
@@ -63,10 +63,10 @@ public:
     int spacing() const;
     void setSpacing(int spacing);
 
-    const QMargins& margins() const;
+    QMargins margins() const;
     void setMargins(const QMargins& margins);
 
-    const QMargins& paddings() const;
+    QMargins paddings() const;
     void setPaddings(const QMargins& paddings);
 
     Qt::Edge iconEdge() const;
