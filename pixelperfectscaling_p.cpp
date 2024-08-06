@@ -173,7 +173,8 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
         if (!margins.isNull()) {
             if (!widget->property("pps_initialMargins").isValid()) {
                 if (!windowEntry->initialized)
-                    widget->setProperty("pps_initialMargins", QVariant::fromValue(margins));
+                    widget->setProperty("pps_initialMargins",
+                                        QVariant::fromValue(margins));
                 widget->setProperty("margins",
                                     QVariant::fromValue(
                                         scaled(screen, margins, factor)));
@@ -190,28 +191,39 @@ void PixelPerfectScaling::resizeWindow(WindowEntry* windowEntry)
             int i = 0;
             Button::Styles styles = widget->property("styles").value<Button::Styles>();
             for (Button::Style* s : {&styles.rest,
-                                     &styles.hovered,
-                                     &styles.pressed,
+                                     &styles.restHovered,
+                                     &styles.restPressed,
+                                     &styles.restDisabled,
                                      &styles.checked,
-                                     &styles.disabled}) {
+                                     &styles.checkedHovered,
+                                     &styles.checkedPressed,
+                                     &styles.checkedDisabled}) {
                 i++;
-                if (s->borderRadius > 0 && s->borderRadius < Defaults::borderRadiusPercentagePoint)
+                if (s->borderRadius > 0
+                    && s->borderRadius < Defaults::borderRadiusPercentagePoint)
                     s->borderRadius = scaled(screen, s->borderRadius, factor);
                 if (s->borderPen.style() != Qt::NoPen)
                     s->borderPen = scaled(screen, s->borderPen, factor);
                 if (s->borderPenDark.style() != Qt::NoPen)
                     s->borderPenDark = scaled(screen, s->borderPenDark, factor);
-                if (!s->font.isCopyOf(font)
-                    && !s->font.isCopyOf(QFont())
+                if (!s->font.isCopyOf(font) && !s->font.isCopyOf(QFont())
                     && !(widget->parentWidget()
                          && s->font.isCopyOf(widget->parentWidget()->font()))) {
-                    if (!widget->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i))).isValid()) {
+                    if (!widget
+                             ->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i)))
+                             .isValid()) {
                         if (!windowEntry->initialized)
-                            widget->setProperty(qPrintable(u"pps_initialFont_style_%1"_s.arg(i)), s->font);
+                            widget->setProperty(qPrintable(
+                                                    u"pps_initialFont_style_%1"_s.arg(
+                                                        i)),
+                                                s->font);
                         s->font = scaled(screen, s->font, factor);
                     } else {
                         const QFont& initialFont
-                            = widget->property(qPrintable(u"pps_initialFont_style_%1"_s.arg(i))).value<QFont>();
+                            = widget
+                                  ->property(
+                                      qPrintable(u"pps_initialFont_style_%1"_s.arg(i)))
+                                  .value<QFont>();
                         s->font = scaled(screen, s->font, initialFont, factor);
                     }
                 }

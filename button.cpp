@@ -1,8 +1,8 @@
 // Copyright (C) 2024 Ömer Göktaş. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-AcayipWidgets-Commercial OR GPL-3.0-only
 
-#include "button_p.h"
 #include "acayiputils.h"
+#include "button_p.h"
 
 #include <private/qhexstring_p.h>
 
@@ -65,7 +65,7 @@ void ButtonPrivate::init()
     q->setCursor(Qt::PointingHandCursor);
     q->setStyles({
         .rest = {
-            .borderRadius = Defaults::borderRadiusPercentagePoint + 100.0,
+            .borderRadius = Defaults::borderRadiusPercentagePoint + 25.0,
             .textColor = QColor(0xffffff),
             .textColorDark = QColor(0xffffff),
             .iconColor = QColor(0xffffff),
@@ -73,25 +73,25 @@ void ButtonPrivate::init()
             .backgroundBrush = QColor(0x0f6cbd),
             .backgroundBrushDark = QColor(0x115ea3),
         },
-        .hovered = {
+        .restHovered = {
             .backgroundBrush = QColor(0x115ea3),
             .backgroundBrushDark = QColor(0x0f6cbd)
         },
-        .pressed = {
+        .restPressed = {
             .backgroundBrush = QColor(0x0c3b5e),
-            .backgroundBrushDark = QColor(0x0f6cbd)
+            .backgroundBrushDark = QColor(0x0c3b5e)
+        },
+        .restDisabled = {
+            .textColor = QColor(0xbdbdbd),
+            .textColorDark = QColor(0x5c5c5c),
+            .iconColor = QColor(0xbdbdbd),
+            .iconColorDark = QColor(0x5c5c5c),
+            .backgroundBrush = QColor(0xf0f0f0),
+            .backgroundBrushDark = QColor(0x141414),
         },
         .checked = {
             .backgroundBrush = QColor(0x0f548c),
             .backgroundBrushDark = QColor(0x0f548c)
-        },
-        .disabled = {
-            .textColor = QColor(0xbdbdbd),
-            .textColorDark = QColor(0x5c5c5c),
-            // .iconColor = QColor(0xbdbdbd),
-            // .iconColorDark = QColor(0x5c5c5c),
-            .backgroundBrush = QColor(0xf0f0f0),
-            .backgroundBrushDark = QColor(0x141414)
         }
     });
 
@@ -116,6 +116,7 @@ void ButtonPrivate::init()
     shadowEffect->setColor(QColor(0, 0, 0, 80));
     shadowEffect->setBlurRadius(8);
     shadowEffect->setOffset(0, 0);
+    shadowEffect->setEnabled(hoverShadowEnabled || elevated);
     q->setGraphicsEffect(shadowEffect);
 
     shadowAnimation.setTargetObject(shadowEffect);
@@ -139,34 +140,31 @@ void ButtonPrivate::init()
  *  \internal
 */
 void ButtonPrivate::mergeStyleWithRest(Button::Style& target,
-                                       const Button::Style& source) const
+                                       const Button::Style& source,
+                                       const Button::Style& fallback) const
 {
     target.borderRadius = source.borderRadius != -1.0 ? source.borderRadius
-                                                      : stylesPainted.rest.borderRadius;
-    target.borderPen = source.borderPen.style() != Qt::NoPen
-                           ? source.borderPen
-                           : stylesPainted.rest.borderPen;
+                                                      : fallback.borderRadius;
+    target.borderPen = source.borderPen.style() != Qt::NoPen ? source.borderPen
+                                                             : fallback.borderPen;
     target.borderPenDark = source.borderPenDark.style() != Qt::NoPen
                                ? source.borderPenDark
-                               : stylesPainted.rest.borderPenDark;
+                               : fallback.borderPenDark;
     target.textColor = source.textColor.isValid() ? source.textColor
-                                                  : stylesPainted.rest.textColor;
-    target.textColorDark = source.textColorDark.isValid()
-                               ? source.textColorDark
-                               : stylesPainted.rest.textColorDark;
+                                                  : fallback.textColor;
+    target.textColorDark = source.textColorDark.isValid() ? source.textColorDark
+                                                          : fallback.textColorDark;
     target.iconColor = source.iconColor.isValid() ? source.iconColor
-                                                  : stylesPainted.rest.iconColor;
-    target.iconColorDark = source.iconColorDark.isValid()
-                               ? source.iconColorDark
-                               : stylesPainted.rest.iconColorDark;
+                                                  : fallback.iconColor;
+    target.iconColorDark = source.iconColorDark.isValid() ? source.iconColorDark
+                                                          : fallback.iconColorDark;
     target.backgroundBrush = source.backgroundBrush.style() != Qt::NoBrush
                                  ? source.backgroundBrush
-                                 : stylesPainted.rest.backgroundBrush;
+                                 : fallback.backgroundBrush;
     target.backgroundBrushDark = source.backgroundBrushDark.style() != Qt::NoBrush
                                      ? source.backgroundBrushDark
-                                     : stylesPainted.rest.backgroundBrushDark;
-    target.font = !source.font.isCopyOf(QFont()) ? source.font
-                                                 : stylesPainted.rest.font;
+                                     : fallback.backgroundBrushDark;
+    target.font = !source.font.isCopyOf(QFont()) ? source.font : fallback.font;
 }
 
 void ButtonPrivate::updateTextDocumentContent()
@@ -322,15 +320,23 @@ QPainterPath ButtonPrivate::backgroundPath(const QMarginsF& m) const
 const Button::Style& ButtonPrivate::activeStyle() const
 {
     Q_Q(const Button);
-    if (!q->isEnabled())
-        return stylesPainted.disabled;
-    if (pressed)
-        return stylesPainted.pressed;
-    if (hovering)
-        return stylesPainted.hovered;
-    if (checkable && checked)
+    if (checkable && checked) {
+        if (!q->isEnabled())
+            return stylesPainted.checkedDisabled;
+        if (pressed)
+            return stylesPainted.checkedPressed;
+        if (hovering)
+            return stylesPainted.checkedHovered;
         return stylesPainted.checked;
-    return stylesPainted.rest;
+    } else {
+        if (!q->isEnabled())
+            return stylesPainted.restDisabled;
+        if (pressed)
+            return stylesPainted.restPressed;
+        if (hovering)
+            return stylesPainted.restHovered;
+        return stylesPainted.rest;
+    }
 }
 
 bool ButtonPrivate::isRippling() const
@@ -390,10 +396,9 @@ void ButtonPrivate::updateHoverShadow()
 void ButtonPrivate::updateFont()
 {
     Q_Q(Button);
+
     const Button::Style& style = activeStyle();
     if (style.font.isCopyOf(QFont())) {
-        if (hovering)
-            return;
         if (q->parentWidget() && !q->parentWidget()->font().isCopyOf(q->font()))
             q->setFont(q->parentWidget()->font());
         else if (!style.font.isCopyOf(q->font()))
@@ -553,12 +558,31 @@ void Button::setStyles(const Button::Styles& styles)
     Q_D(Button);
 
     d->styles = styles;
-
     d->stylesPainted.rest = styles.rest;
-    d->mergeStyleWithRest(d->stylesPainted.hovered, styles.hovered);
-    d->mergeStyleWithRest(d->stylesPainted.pressed, styles.pressed);
-    d->mergeStyleWithRest(d->stylesPainted.checked, styles.checked);
-    d->mergeStyleWithRest(d->stylesPainted.disabled, styles.disabled);
+
+    d->mergeStyleWithRest(d->stylesPainted.restHovered,
+                          styles.restHovered,
+                          d->stylesPainted.rest);
+    d->mergeStyleWithRest(d->stylesPainted.restPressed,
+                          styles.restPressed,
+                          d->stylesPainted.rest);
+    d->mergeStyleWithRest(d->stylesPainted.restDisabled,
+                          styles.restDisabled,
+                          d->stylesPainted.rest);
+
+    d->mergeStyleWithRest(d->stylesPainted.checked,
+                          styles.checked,
+                          d->stylesPainted.rest);
+
+    d->mergeStyleWithRest(d->stylesPainted.checkedHovered,
+                          styles.checkedHovered,
+                          d->stylesPainted.restHovered);
+    d->mergeStyleWithRest(d->stylesPainted.checkedPressed,
+                          styles.checkedPressed,
+                          d->stylesPainted.restPressed);
+    d->mergeStyleWithRest(d->stylesPainted.checkedDisabled,
+                          styles.checkedDisabled,
+                          d->stylesPainted.restPressed);
 
     d->updateFont();
     update();
@@ -575,6 +599,7 @@ void Button::setElevated(bool elevated)
     Q_D(Button);
     d->elevated = elevated;
     if (d->shadowEffect) {
+        d->shadowEffect->setEnabled(d->hoverShadowEnabled || d->elevated);
         d->shadowEffect->setBlurRadius(scaled(this, elevated ? 40 : 8));
         d->shadowEffect->setColor(QColor(0, 0, 0, elevated ? 160 : 80));
     }
@@ -590,6 +615,8 @@ void Button::setHoverShadowEnabled(bool hoverShadowEnabled)
 {
     Q_D(Button);
     d->hoverShadowEnabled = hoverShadowEnabled;
+    if (d->shadowEffect)
+        d->shadowEffect->setEnabled(d->hoverShadowEnabled || d->elevated);
     d->updateHoverShadow();
 }
 
@@ -750,12 +777,17 @@ bool Button::event(QEvent* event)
     } else if (event->type() == QEvent::MouseButtonPress) {
         auto press = static_cast<QMouseEvent*>(event);
         if (!d->isRippling() && hitButton(press->position().toPoint())) {
-            if (d->hovering)
-                d->rippleStyle = d->stylesPainted.hovered;
-            else if (d->checkable && d->checked)
-                d->rippleStyle = d->stylesPainted.checked;
-            else
-                d->rippleStyle = d->stylesPainted.rest;
+            if (d->checkable && d->checked) {
+                if (d->hovering)
+                    d->rippleStyle = d->stylesPainted.checkedHovered;
+                else
+                    d->rippleStyle = d->stylesPainted.checked;
+            } else {
+                if (d->hovering)
+                    d->rippleStyle = d->stylesPainted.restHovered;
+                else
+                    d->rippleStyle = d->stylesPainted.rest;
+            }
             repaint();
         }
     }
@@ -875,11 +907,19 @@ void Button::paintEvent(QPaintEvent*)
                     if (rbBrush.style() == Qt::SolidPattern) {
                         gradient.setColorAt(0.0, strongerColor(rbBrush.color()));
                     } else {
-                        gradient.setColorAt(
-                            0.0,
-                            darkStyle
-                                ? d->stylesPainted.pressed.backgroundBrushDark.color()
-                                : d->stylesPainted.pressed.backgroundBrush.color());
+                        gradient
+                            .setColorAt(0.0,
+                                        darkStyle
+                                            ? ((d->checkable && d->checked)
+                                                   ? d->stylesPainted.checkedPressed
+                                                         .backgroundBrushDark.color()
+                                                   : d->stylesPainted.restPressed
+                                                         .backgroundBrushDark.color())
+                                            : ((d->checkable && d->checked)
+                                                   ? d->stylesPainted.checkedPressed
+                                                         .backgroundBrush.color()
+                                                   : d->stylesPainted.restPressed
+                                                         .backgroundBrush.color()));
                     }
                     gradient.setColorAt(0.5 + qMax(rT / 2.0 - 0.25, 0.0),
                                         Qt::transparent);
@@ -906,7 +946,8 @@ void Button::paintEvent(QPaintEvent*)
         painter.setClipRect(iconRect);
         painter.setOpacity(o);
         if (iconColor.isValid()) {
-            const QString& cacheKey = u"Acayip::Button::icon"_s
+            const QString& cacheKey
+                = u"Acayip::Button::icon"_s
                   % HexString<uint>(iconColor.rgba())
                   % HexString<uint>(iconRect.width())
                   % HexString<uint>(iconRect.height())
@@ -942,7 +983,8 @@ void Button::paintEvent(QPaintEvent*)
         painter.setClipRect(menuRect);
         painter.setOpacity(o);
         if (iconColor.isValid()) {
-            const QString& cacheKey = u"Acayip::Button::menuArrow"_s
+            const QString& cacheKey
+                = u"Acayip::Button::menuArrow"_s
                   % HexString<uint>(iconColor.rgba())
                   % HexString<uint>(menuRect.width())
                   % HexString<uint>(menuRect.height())

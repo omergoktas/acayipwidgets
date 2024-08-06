@@ -58,6 +58,9 @@ public:
 
     void addButton(const QString& text = QString(), const QIcon& icon = QIcon());
 
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 

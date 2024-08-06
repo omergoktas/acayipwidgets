@@ -46,10 +46,13 @@ public:
     struct Styles
     {
         Style rest;
-        Style hovered;
-        Style pressed;
+        Style restHovered;
+        Style restPressed;
+        Style restDisabled;
         Style checked;
-        Style disabled;
+        Style checkedHovered;
+        Style checkedPressed;
+        Style checkedDisabled;
     };
 
 public:

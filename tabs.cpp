@@ -27,9 +27,9 @@ void TabsPrivate::init()
 
     q->setWidgetResizable(true);
     q->setWidget(contentLayout->parentWidget());
-    q->setContentsMargins(0, 0, 0, 0);
-    q->setViewportMargins(0, 0, 0, 0);
-    q->setOrientation(Qt::Vertical);
+    q->setMargins(Defaults::margins);
+    q->setPaddings(Defaults::paddings);
+    q->setOrientation(Qt::Horizontal);
     q->setSizeAdjustPolicy(QScrollArea::AdjustToContents);
     //q->setFrameShape(QFrame::NoFrame);
     q->setStyle({
@@ -159,27 +159,65 @@ void Tabs::addButton(const QString& text, const QIcon& icon)
     button->setStyles({
         .rest = {
             .borderRadius = Defaults::borderRadiusPercentagePoint + 20.0,
-            .textColor = QColor(0xffffff),
-            .textColorDark = QColor(0xffffff),
-            .iconColor = QColor(0xffffff),
-            .iconColorDark = QColor(0xffffff),
+            .textColor = QColor(0x424242),
+            .iconColor = QColor(0x424242),
         },
-        .hovered = {
+        .restHovered = {
+            .textColor = QColor(0x242424),
+            .iconColor = QColor(0x242424),
             .backgroundBrush = QColor::fromRgba(0x10000000),
             .backgroundBrushDark = QColor::fromRgba(0x10000000)
         },
-        .pressed = {
+        .restPressed = {
+            .textColor = QColor(0x242424),
+            .iconColor = QColor(0x242424),
             .backgroundBrush = QColor::fromRgba(0x30000000),
             .backgroundBrushDark = QColor::fromRgba(0x30000000)
         },
+        .restDisabled = {
+            .textColor = QColor(0xbdbdbd),
+            .iconColor = QColor(0xbdbdbd)
+        },
         .checked = {
+            .textColor = QColor(0x242424),
             .backgroundBrush = QColor::fromRgba(0x20000000),
             .backgroundBrushDark = QColor::fromRgba(0x20000000),
+            .font = f
+        },
+        .checkedHovered = {
+            .font = f
+        },
+        .checkedPressed = {
             .font = f
         }
     });
     d->contentLayout->addWidget(button);
-    // d->contentLayout->addStretch();
+    //d->contentLayout->addStretch();
+    widget()->updateGeometry();
+    viewport()->updateGeometry();
+    updateGeometry();
+}
+
+QSize Tabs::sizeHint() const
+{
+    Q_D(const Tabs);
+    QSize sz(d->widget->sizeHint());
+    if (d->vbarpolicy == Qt::ScrollBarAlwaysOn)
+        sz.setWidth(sz.width() + d->vbar->sizeHint().width());
+    if (d->hbarpolicy == Qt::ScrollBarAlwaysOn)
+        sz.setHeight(sz.height() + d->hbar->sizeHint().height());
+    qDebug() << sz;
+    return sz;
+}
+
+QSize Tabs::minimumSizeHint() const
+{
+    QSize ms = QScrollArea::minimumSizeHint();
+    if (orientation() == Qt::Horizontal)
+        ms.setHeight(ms.height() + sizeHint().height());
+    else
+        ms.setWidth(ms.width() + sizeHint().width());
+    return ms;
 }
 
 void Tabs::paintEvent(QPaintEvent*)

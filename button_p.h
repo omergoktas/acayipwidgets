@@ -32,7 +32,9 @@ public:
     ButtonPrivate();
     enum Item { Background, Icon, Menu, Text };
     void init();
-    void mergeStyleWithRest(Button::Style& target, const Button::Style& source) const;
+    void mergeStyleWithRest(Button::Style& target,
+                            const Button::Style& source,
+                            const Button::Style& fallback) const;
     void updateTextDocumentContent();
     QRect itemRect(Item item) const;
     qreal calculateRadius(qreal value) const;
