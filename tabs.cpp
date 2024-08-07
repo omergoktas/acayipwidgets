@@ -18,7 +18,7 @@ TabsPrivate::TabsPrivate()
     , contentLayout(new BoxLayout(BoxLayout::TopToBottom, new QWidget()))
 {
     contentLayout->setContentsMargins(0, 0, 0, 0);
-    contentLayout->setSizeConstraint(BoxLayout::SetMinAndMaxSize);
+    // contentLayout->setSizeConstraint(BoxLayout::SetMinAndMaxSize);
 }
 
 void TabsPrivate::init()
@@ -29,14 +29,14 @@ void TabsPrivate::init()
     q->setWidget(contentLayout->parentWidget());
     q->setMargins(Defaults::margins);
     q->setPaddings(Defaults::paddings);
-    q->setOrientation(Qt::Horizontal);
+    q->setOrientation(Qt::Vertical);
     q->setSizeAdjustPolicy(QScrollArea::AdjustToContents);
     //q->setFrameShape(QFrame::NoFrame);
     q->setStyle({
         .backgroundBrush = QColor(0x0f6cbd),
         .backgroundBrushDark = QColor(0x115ea3),
         .selectionBrush = QColor(0x0f6cbd),
-        .selectionBrushDark = QColor(0x115ea3)
+        .selectionBrushDark = QColor(0x115ea3),
     });
 }
 
@@ -150,7 +150,7 @@ void Tabs::addButton(const QString& text, const QIcon& icon)
     Q_D(Tabs);
 
     QFont f(font());
-    f.setBold(true);
+    f.setWeight(QFont::DemiBold);
 
     auto button = new Button(text, icon);
     button->setCheckable(true);
@@ -158,41 +158,55 @@ void Tabs::addButton(const QString& text, const QIcon& icon)
     button->setHoverShadowEnabled(false);
     button->setStyles({
         .rest = {
-            .borderRadius = Defaults::borderRadiusPercentagePoint + 20.0,
+            .borderRadius = Defaults::borderRadiusPercentagePoint + 25.0,
             .textColor = QColor(0x424242),
+            .textColorDark = QColor(0xd6d6d6),
             .iconColor = QColor(0x424242),
+            .iconColorDark = QColor(0xd6d6d6),
         },
         .restHovered = {
             .textColor = QColor(0x242424),
+            .textColorDark = QColor(0xffffff),
             .iconColor = QColor(0x242424),
+            .iconColorDark = QColor(0xffffff),
             .backgroundBrush = QColor::fromRgba(0x10000000),
-            .backgroundBrushDark = QColor::fromRgba(0x10000000)
+            .backgroundBrushDark = QColor::fromRgba(0x10000000),
         },
         .restPressed = {
             .textColor = QColor(0x242424),
+            .textColorDark = QColor(0xffffff),
             .iconColor = QColor(0x242424),
+            .iconColorDark = QColor(0xffffff),
             .backgroundBrush = QColor::fromRgba(0x30000000),
-            .backgroundBrushDark = QColor::fromRgba(0x30000000)
+            .backgroundBrushDark = QColor::fromRgba(0x30000000),
         },
         .restDisabled = {
             .textColor = QColor(0xbdbdbd),
-            .iconColor = QColor(0xbdbdbd)
+            .textColorDark = QColor(0x5c5c5c),
+            .iconColor = QColor(0xbdbdbd),
+            .iconColorDark = QColor(0x5c5c5c),
         },
         .checked = {
             .textColor = QColor(0x242424),
+            .textColorDark = QColor(0xffffff),
+            .iconColor = QColor(0x0f6cbd),
+            .iconColorDark = QColor(0x479ef5),
             .backgroundBrush = QColor::fromRgba(0x20000000),
             .backgroundBrushDark = QColor::fromRgba(0x20000000),
-            .font = f
+            .font = f,
         },
         .checkedHovered = {
-            .font = f
+            .iconColor = QColor(0x115ea3),
+            .iconColorDark = QColor(0x62abf5),
+            .font = f,
         },
         .checkedPressed = {
-            .font = f
+            .iconColor = QColor(0x0f548c),
+            .iconColorDark = QColor(0x2886de),
+            .font = f,
         }
     });
     d->contentLayout->addWidget(button);
-    //d->contentLayout->addStretch();
     widget()->updateGeometry();
     viewport()->updateGeometry();
     updateGeometry();
@@ -201,7 +215,8 @@ void Tabs::addButton(const QString& text, const QIcon& icon)
 QSize Tabs::sizeHint() const
 {
     Q_D(const Tabs);
-    QSize sz(d->widget->sizeHint());
+    QSize sz(d->widget->sizeHint()
+             + (orientation() == Qt::Horizontal ? QSize(0, 6) : QSize(6, 0)));
     if (d->vbarpolicy == Qt::ScrollBarAlwaysOn)
         sz.setWidth(sz.width() + d->vbar->sizeHint().width());
     if (d->hbarpolicy == Qt::ScrollBarAlwaysOn)
@@ -220,9 +235,6 @@ QSize Tabs::minimumSizeHint() const
     return ms;
 }
 
-void Tabs::paintEvent(QPaintEvent*)
-{
-
-}
+void Tabs::paintEvent(QPaintEvent*) {}
 
 ACAYIPWIDGETS_END_NAMESPACE

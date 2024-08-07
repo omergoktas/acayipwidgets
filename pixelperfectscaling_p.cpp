@@ -28,6 +28,8 @@ using namespace Qt::Literals;
 
 ACAYIPWIDGETS_BEGIN_NAMESPACE
 
+// FIXME: Windows window movement between monitors is broken
+
 PixelPerfectScaling::PixelPerfectScaling()
     : QObject()
     , QWindowSystemEventHandler()

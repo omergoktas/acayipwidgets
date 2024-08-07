@@ -75,11 +75,11 @@ void ButtonPrivate::init()
         },
         .restHovered = {
             .backgroundBrush = QColor(0x115ea3),
-            .backgroundBrushDark = QColor(0x0f6cbd)
+            .backgroundBrushDark = QColor(0x0f6cbd),
         },
         .restPressed = {
             .backgroundBrush = QColor(0x0c3b5e),
-            .backgroundBrushDark = QColor(0x0c3b5e)
+            .backgroundBrushDark = QColor(0x0c3b5e),
         },
         .restDisabled = {
             .textColor = QColor(0xbdbdbd),
@@ -91,7 +91,7 @@ void ButtonPrivate::init()
         },
         .checked = {
             .backgroundBrush = QColor(0x0f548c),
-            .backgroundBrushDark = QColor(0x0f548c)
+            .backgroundBrushDark = QColor(0x0f548c),
         }
     });
 

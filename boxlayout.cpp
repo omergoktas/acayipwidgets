@@ -13,6 +13,8 @@ BoxLayoutPrivate::BoxLayoutPrivate(BoxLayout* q_ptr)
     : q(q_ptr)
 {}
 
+// FIXME: Fix multiple nested layout animations
+
 void BoxLayoutPrivate::init()
 {
     QObject::connect(&animationGroup, &QPropertyAnimation::finished, q, [this] {
